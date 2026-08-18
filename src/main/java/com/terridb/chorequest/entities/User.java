@@ -1,9 +1,6 @@
 package com.terridb.chorequest.entities;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,8 +21,12 @@ public class User extends BaseEntity {
     @Column(nullable = false, length = 50)
     private String lastName;
 
+    @Column(length = 1024)
     private String avatarUrl;
 
     @ManyToMany(mappedBy = "members")
     private Set<Household> households = new HashSet<>();
+
+    @OneToMany(mappedBy = "user")
+    private Set<TaskAssignment> assignments;
 }

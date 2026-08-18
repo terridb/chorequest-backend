@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Entity
 @Getter
@@ -35,7 +36,12 @@ public class Task extends BaseEntity {
     @Column(nullable = false)
     private boolean alwaysSameDay = false;
 
+    private int defaultPoints;
+
     @ManyToOne
     @JoinColumn(name = "household_id", nullable = false)
     private Household household;
+
+    @OneToMany(mappedBy = "task")
+    private Set<TaskAssignment> assignments;
 }

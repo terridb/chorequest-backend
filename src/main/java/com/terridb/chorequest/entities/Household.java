@@ -19,8 +19,10 @@ public class Household extends BaseEntity {
     private String name;
 
     @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
     private HouseholdType type = HouseholdType.FAMILY;
 
+    @Column(length = 1024)
     private String photoUrl;
 
     @Column(length = 85)
