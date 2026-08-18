@@ -1,0 +1,42 @@
+package com.terridb.chorequest.entities;
+
+import com.terridb.chorequest.entities.enums.HouseholdType;
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.HashSet;
+import java.util.Set;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@Table(name = "households")
+public class Household extends BaseEntity {
+    @Column(nullable = false, length = 50)
+    private String name;
+
+    @Column(nullable = false)
+    private HouseholdType type = HouseholdType.FAMILY;
+
+    private String photoUrl;
+
+    @Column(length = 85)
+    private String city;
+
+    @Column(length = 10)
+    private String zipcode;
+
+    @ManyToMany
+    @JoinTable(
+            name = "household_users",
+            joinColumns = @JoinColumn(name = "household_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> members = new HashSet<>();
+
+    @OneToMany(mappedBy = "household")
+    private Set<Task> tasks = new HashSet<>();
+}

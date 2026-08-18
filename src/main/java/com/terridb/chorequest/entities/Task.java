@@ -34,4 +34,8 @@ public class Task extends BaseEntity {
 
     @Column(nullable = false)
     private boolean alwaysSameDay = false;
+
+    @ManyToOne
+    @JoinColumn(name = "household_id", nullable = false)
+    private Household household;
 }
