@@ -31,13 +31,8 @@ public class Household extends BaseEntity {
     @Column(length = 10)
     private String zipcode;
 
-    @ManyToMany
-    @JoinTable(
-            name = "household_users",
-            joinColumns = @JoinColumn(name = "household_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id")
-    )
-    private Set<User> members = new HashSet<>();
+    @OneToMany(mappedBy = "household")
+    private Set<HouseholdMember> members = new HashSet<>();
 
     @OneToMany(mappedBy = "household")
     private Set<Task> tasks = new HashSet<>();

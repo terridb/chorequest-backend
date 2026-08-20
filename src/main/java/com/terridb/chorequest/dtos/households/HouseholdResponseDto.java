@@ -1,6 +1,6 @@
 package com.terridb.chorequest.dtos.households;
 
-import com.terridb.chorequest.dtos.users.UserResponseSimpleDto;
+import com.terridb.chorequest.dtos.householdMembers.HouseholdMemberResponseDto;
 import com.terridb.chorequest.entities.enums.HouseholdType;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,5 +17,5 @@ public class HouseholdResponseDto {
     private String photoUrl;
     private String city;
     private String zipcode;
-    private List<UserResponseSimpleDto> members;
+    private List<HouseholdMemberResponseDto> members;
 }

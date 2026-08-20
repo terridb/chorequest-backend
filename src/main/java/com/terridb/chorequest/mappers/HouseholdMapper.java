@@ -11,10 +11,10 @@ import java.util.stream.Collectors;
 
 @Component
 public class HouseholdMapper {
-    private final UserMapper userMapper;
+    private final HouseholdMemberMapper householdMemberMapper;
 
-    public HouseholdMapper(UserMapper userMapper) {
-        this.userMapper = userMapper;
+    public HouseholdMapper(HouseholdMemberMapper householdMemberMapper) {
+        this.householdMemberMapper = householdMemberMapper;
     }
 
     public Household toEntity(HouseholdRequestDto requestDto, Household household) {
@@ -40,7 +40,7 @@ public class HouseholdMapper {
         responseDto.setPhotoUrl(household.getPhotoUrl());
         responseDto.setCity(household.getCity());
         responseDto.setZipcode(household.getZipcode());
-        responseDto.setMembers(userMapper.toSimpleDto(new ArrayList<>(household.getMembers())));
+        responseDto.setMembers(householdMemberMapper.toDto(new ArrayList<>(household.getMembers())));
 
         return responseDto;
     }

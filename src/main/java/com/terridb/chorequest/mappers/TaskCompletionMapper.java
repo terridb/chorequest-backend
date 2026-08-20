@@ -24,7 +24,7 @@ public class TaskCompletionMapper {
         responseDto.setCompletedAt(taskCompletion.getCompletedAt());
         responseDto.setRewardedPoints(taskCompletion.getRewardedPoints());
         responseDto.setTaskAssignment(taskAssignmentMapper.toDto(taskCompletion.getTaskAssignment()));
-        responseDto.setCompletedBy(userMapper.toSimpleDto(taskCompletion.getCompletedBy()));
+        responseDto.setCompletedBy(userMapper.toSimpleDto(taskCompletion.getCompletedBy().getUser()));
 
         return responseDto;
     }

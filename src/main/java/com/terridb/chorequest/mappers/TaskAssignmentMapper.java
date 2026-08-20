@@ -22,7 +22,7 @@ public class TaskAssignmentMapper {
 
         responseDto.setId(taskAssignment.getId());
         responseDto.setTask(taskMapper.toDto(taskAssignment.getTask()));
-        responseDto.setUser(userMapper.toSimpleDto(taskAssignment.getUser()));
+        responseDto.setUser(userMapper.toSimpleDto(taskAssignment.getHouseholdMember().getUser()));
         responseDto.setDueDate(taskAssignment.getDueDate());
 
         return responseDto;

@@ -17,8 +17,8 @@ import java.time.LocalDate;
 @Table(name = "task_assignments")
 public class TaskAssignment extends BaseEntity {
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
+    @JoinColumn(name = "household_member_id", nullable = false)
+    private HouseholdMember householdMember;
 
     @ManyToOne
     @JoinColumn(name = "task_id", nullable = false)

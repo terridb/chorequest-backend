@@ -29,5 +29,5 @@ public class TaskCompletion extends BaseEntity {
 
     @ManyToOne
     @JoinColumn(name = "completed_by_id", nullable = false)
-    private User completedBy;
+    private HouseholdMember completedBy;
 }
