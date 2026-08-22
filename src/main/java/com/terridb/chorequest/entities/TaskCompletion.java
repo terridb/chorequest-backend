@@ -16,11 +16,6 @@ public class TaskCompletion extends BaseEntity {
     @Column(nullable = false)
     private LocalDateTime completedAt;
 
-    @PrePersist
-    protected void onComplete() {
-        completedAt = LocalDateTime.now();
-    }
-
     private int rewardedPoints;
 
     @OneToOne
@@ -30,4 +25,9 @@ public class TaskCompletion extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "completed_by_id", nullable = false)
     private HouseholdMember completedBy;
+
+    @Override
+    protected void onPersist() {
+        completedAt = LocalDateTime.now();
+    }
 }

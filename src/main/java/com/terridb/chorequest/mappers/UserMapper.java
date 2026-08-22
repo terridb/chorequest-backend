@@ -30,7 +30,7 @@ public class UserMapper {
         responseDto.setFirstName(user.getFirstName());
         responseDto.setLastName(user.getLastName());
         responseDto.setAvatarUrl(user.getAvatarUrl());
-        responseDto.setHouseholdIds(user.getHouseholds().stream()
+        responseDto.setHouseholdIds(user.getMemberships().stream()
                 .map(householdMember -> householdMember.getHousehold().getId())
                 .collect(Collectors.toList()));
 

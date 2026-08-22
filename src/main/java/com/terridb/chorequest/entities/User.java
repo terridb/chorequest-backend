@@ -25,5 +25,5 @@ public class User extends BaseEntity {
     private String avatarUrl;
 
     @OneToMany(mappedBy = "user")
-    private Set<HouseholdMember> households = new HashSet<>();
+    private Set<HouseholdMember> memberships = new HashSet<>();
 }

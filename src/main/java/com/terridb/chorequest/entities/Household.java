@@ -31,9 +31,9 @@ public class Household extends BaseEntity {
     @Column(length = 10)
     private String zipcode;
 
-    @OneToMany(mappedBy = "household")
+    @OneToMany(mappedBy = "household", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<HouseholdMember> members = new HashSet<>();
 
-    @OneToMany(mappedBy = "household")
+    @OneToMany(mappedBy = "household", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Task> tasks = new HashSet<>();
 }

@@ -42,6 +42,6 @@ public class Task extends BaseEntity {
     @JoinColumn(name = "household_id", nullable = false)
     private Household household;
 
-    @OneToMany(mappedBy = "task")
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<TaskAssignment> assignments;
 }
