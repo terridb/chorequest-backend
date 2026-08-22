@@ -1,5 +1,7 @@
 package com.terridb.chorequest.services;
 
+import com.terridb.chorequest.dtos.tasks.TaskPatchDto;
+import com.terridb.chorequest.dtos.tasks.TaskRequestDto;
 import com.terridb.chorequest.dtos.tasks.TaskResponseDto;
 import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.Task;
@@ -7,6 +9,7 @@ import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.TaskMapper;
 import com.terridb.chorequest.repositories.HouseholdRepository;
 import com.terridb.chorequest.repositories.TaskRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -25,15 +28,46 @@ public class TaskService {
     }
 
     public List<TaskResponseDto> getTasksForHousehold(UUID householdId) {
-        Household household = householdRepository.findById(householdId)
-                .orElseThrow(() -> new RecordNotFoundException("Household with id " + householdId + " not found"));
+        Household household = getHousehold(householdId);
         List<Task> tasks = taskRepository.findByHouseholdOrderByCreatedAtDesc(household);
 
         return taskMapper.toDto(tasks);
     }
 
-//    @todo get tasks by user
-//    @todo create new task by household ? or by user?
-//    @todo adjust ask
-//    @todo delete task
+    public TaskResponseDto getTaskById(UUID id) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Task with id " + id + " not found"));
+
+        return taskMapper.toDto(task);
+    }
+
+    public TaskResponseDto postTask(UUID householdId, TaskRequestDto input) {
+        Household household = getHousehold(householdId);
+
+        Task task = taskMapper.toEntity(input, null);
+        task.setHousehold(household);
+
+        return taskMapper.toDto(taskRepository.save(task));
+    }
+
+    public TaskResponseDto updateTask(UUID id, TaskPatchDto input) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Task with id " + id + " not found"));
+
+        taskMapper.patch(input, task);
+
+        return taskMapper.toDto(taskRepository.save(task));
+    }
+
+    public void deleteTask(UUID id) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Task with id " + id + " not found"));
+
+        taskRepository.delete(task);
+    }
+
+    private Household getHousehold(UUID id) {
+        return householdRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Household with id " + id + " not found"));
+    }
 }

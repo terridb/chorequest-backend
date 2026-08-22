@@ -1,5 +1,6 @@
 package com.terridb.chorequest.mappers;
 
+import com.terridb.chorequest.dtos.tasks.TaskPatchDto;
 import com.terridb.chorequest.dtos.tasks.TaskRequestDto;
 import com.terridb.chorequest.dtos.tasks.TaskResponseDto;
 import com.terridb.chorequest.entities.Task;
@@ -22,6 +23,32 @@ public class TaskMapper {
         task.setStartingDate(requestDto.getStartingDate());
         task.setAlwaysSameDay(requestDto.isAlwaysSameDay());
         task.setDefaultPoints(requestDto.getDefaultPoints());
+
+        return task;
+    }
+
+    public Task patch(TaskPatchDto patchDto, Task task) {
+        if (patchDto.getTitle() != null) {
+            task.setTitle(patchDto.getTitle());
+        }
+        if (patchDto.getDescription() != null) {
+            task.setDescription(patchDto.getDescription());
+        }
+        if (patchDto.getEffort() != null) {
+            task.setEffort(patchDto.getEffort());
+        }
+        if (patchDto.getFrequency() != null) {
+            task.setFrequency(patchDto.getFrequency());
+        }
+        if (patchDto.getStartingDate() != null) {
+            task.setStartingDate(patchDto.getStartingDate());
+        }
+        if (patchDto.getAlwaysSameDay() != null) {
+            task.setAlwaysSameDay(patchDto.getAlwaysSameDay());
+        }
+        if (patchDto.getDefaultPoints() != null) {
+            task.setDefaultPoints(patchDto.getDefaultPoints());
+        }
 
         return task;
     }
