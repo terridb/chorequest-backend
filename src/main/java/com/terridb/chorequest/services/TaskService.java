@@ -9,7 +9,6 @@ import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.TaskMapper;
 import com.terridb.chorequest.repositories.HouseholdRepository;
 import com.terridb.chorequest.repositories.TaskRepository;
-import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -35,10 +34,7 @@ public class TaskService {
     }
 
     public TaskResponseDto getTaskById(UUID id) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RecordNotFoundException("Task with id " + id + " not found"));
-
-        return taskMapper.toDto(task);
+        return taskMapper.toDto(getTask(id));
     }
 
     public TaskResponseDto postTask(UUID householdId, TaskRequestDto input) {
@@ -51,23 +47,24 @@ public class TaskService {
     }
 
     public TaskResponseDto updateTask(UUID id, TaskPatchDto input) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RecordNotFoundException("Task with id " + id + " not found"));
-
+        Task task =  getTask(id);
         Task patchedTask = taskMapper.patch(input, task);
 
         return taskMapper.toDto(taskRepository.save(patchedTask));
     }
 
     public void deleteTask(UUID id) {
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new RecordNotFoundException("Task with id " + id + " not found"));
-
-        taskRepository.delete(task);
+        taskRepository.delete(getTask(id));
     }
 
     private Household getHousehold(UUID id) {
         return householdRepository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Household with id " + id + " not found"));
+    }
+
+    private Task getTask(UUID id) {
+        return taskRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Task with id " + id + " not found"));
+
     }
 }
