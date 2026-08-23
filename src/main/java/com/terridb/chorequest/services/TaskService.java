@@ -54,9 +54,9 @@ public class TaskService {
         Task task = taskRepository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Task with id " + id + " not found"));
 
-        taskMapper.patch(input, task);
+        Task patchedTask = taskMapper.patch(input, task);
 
-        return taskMapper.toDto(taskRepository.save(task));
+        return taskMapper.toDto(taskRepository.save(patchedTask));
     }
 
     public void deleteTask(UUID id) {
