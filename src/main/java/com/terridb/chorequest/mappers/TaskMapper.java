@@ -23,6 +23,7 @@ public class TaskMapper {
         task.setStartingDate(requestDto.getStartingDate());
         task.setAlwaysSameDay(requestDto.isAlwaysSameDay());
         task.setDefaultPoints(requestDto.getDefaultPoints());
+        task.setStrategy(requestDto.getStrategy());
 
         return task;
     }
@@ -49,6 +50,9 @@ public class TaskMapper {
         if (patchDto.getDefaultPoints() != null) {
             task.setDefaultPoints(patchDto.getDefaultPoints());
         }
+        if (patchDto.getStrategy() != null) {
+            task.setStrategy(patchDto.getStrategy());
+        }
 
         return task;
     }
@@ -64,6 +68,8 @@ public class TaskMapper {
         responseDto.setStartingDate(task.getStartingDate());
         responseDto.setAlwaysSameDay(task.isAlwaysSameDay());
         responseDto.setDefaultPoints(task.getDefaultPoints());
+        responseDto.setStrategy(task.getStrategy());
+        responseDto.setResponsibleMemberId(task.getResponsibleMember() != null ? task.getResponsibleMember().getId() : null);
         responseDto.setHouseholdId(task.getHousehold().getId());
 
         return responseDto;

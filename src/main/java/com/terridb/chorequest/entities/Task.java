@@ -1,5 +1,6 @@
 package com.terridb.chorequest.entities;
 
+import com.terridb.chorequest.entities.enums.AssignmentStrategy;
 import com.terridb.chorequest.entities.enums.Effort;
 import com.terridb.chorequest.entities.enums.Frequency;
 import jakarta.persistence.*;
@@ -37,6 +38,14 @@ public class Task extends BaseEntity {
     private boolean alwaysSameDay = false;
 
     private int defaultPoints;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private AssignmentStrategy strategy = AssignmentStrategy.SOLO;
+
+    @ManyToOne
+    @JoinColumn(name = "responsible_member_id")
+    private HouseholdMember responsibleMember;
 
     @ManyToOne
     @JoinColumn(name = "household_id", nullable = false)

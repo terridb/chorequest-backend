@@ -1,5 +1,6 @@
 package com.terridb.chorequest.dtos.tasks;
 
+import com.terridb.chorequest.entities.enums.AssignmentStrategy;
 import com.terridb.chorequest.entities.enums.Effort;
 import com.terridb.chorequest.entities.enums.Frequency;
 import lombok.Getter;
@@ -19,5 +20,7 @@ public class TaskResponseDto {
     private LocalDate startingDate;
     private boolean alwaysSameDay;
     private int defaultPoints;
+    private AssignmentStrategy strategy;
+    private UUID responsibleMemberId;
     private UUID householdId;
 }
