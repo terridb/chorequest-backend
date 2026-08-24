@@ -71,6 +71,16 @@ public class TaskAssignmentService {
         return taskAssignmentMapper.toDto(taskAssignmentRepository.save(assignment));
     }
 
+    public void deleteAssignment(UUID id) {
+        TaskAssignment assignment = getAssignment(id);
+
+        if (assignment.getTaskCompletion() != null) {
+            throw new BadRequestException("Cannot delete a completed task assignment");
+        }
+
+        taskAssignmentRepository.delete(assignment);
+    }
+
     public TaskAssignmentResponseDto assignTaskToMember(UUID taskId, UUID memberId) {
         HouseholdMember member = getMember(memberId);
         Task task = getTask(taskId);

@@ -40,11 +40,12 @@
 
 | Method | Path | Description | Status |
 |---|---|---|---|
-| POST | /tasks/{id}/assignments | Assign a task to a household member with a due date | planned |
+| POST | /tasks/{id}/assignments | Assign a task to a household member with a due date | existing |
+| GET | /assignments/{id} | Get a single assignment | existing |
 | GET | /tasks/{id}/assignments | Assignment history/current assignees for a task | existing |
 | GET | /members/{id}/assignments | A member's assigned tasks | existing |
-| PATCH | /assignments/{id} | Reassign / change due date | planned |
-| DELETE | /assignments/{id} | Cancel an assignment | planned |
+| PATCH | /assignments/{id} | Reassign / change due date | existing |
+| DELETE | /assignments/{id} | Cancel an assignment | existing |
 
 ### Task completions
 

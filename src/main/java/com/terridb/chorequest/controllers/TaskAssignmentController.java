@@ -51,4 +51,9 @@ public class TaskAssignmentController {
         return ResponseEntity.ok(taskAssignmentService.updateAssignment(id, input));
     }
 
+    @DeleteMapping("/assignments/{id}")
+    public ResponseEntity<Void> deleteAssignment(@PathVariable UUID id) {
+        taskAssignmentService.deleteAssignment(id);
+        return ResponseEntity.noContent().build();
+    }
 }
