@@ -1,11 +1,13 @@
 package com.terridb.chorequest.services;
 
+import com.terridb.chorequest.dtos.taskAssignments.TaskAssignmentRequestDto;
 import com.terridb.chorequest.dtos.taskAssignments.TaskAssignmentResponseDto;
 import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.Task;
 import com.terridb.chorequest.entities.TaskAssignment;
 import com.terridb.chorequest.entities.enums.AssignmentStrategy;
 import com.terridb.chorequest.entities.enums.Frequency;
+import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.TaskAssignmentMapper;
 import com.terridb.chorequest.repositories.HouseholdMemberRepository;
@@ -35,6 +37,10 @@ public class TaskAssignmentService {
         this.householdMemberRepository = householdMemberRepository;
     }
 
+    public TaskAssignmentResponseDto getAssignmentById(UUID id) {
+        return taskAssignmentMapper.toDto(getAssignment(id));
+    }
+
     public List<TaskAssignmentResponseDto> getAssignmentsForTask(UUID id) {
         Task task = getTask(id);
         Set<TaskAssignment> assignments = taskAssignmentRepository.findByTaskOrderByDueDateDesc(task);
@@ -49,9 +55,29 @@ public class TaskAssignmentService {
         return taskAssignmentMapper.toDto(assignments.stream().toList());
     }
 
+    public TaskAssignmentResponseDto updateAssignment(UUID id, TaskAssignmentRequestDto input) {
+        TaskAssignment assignment = getAssignment(id);
+        HouseholdMember member = getMember(input.getHouseholdMemberId());
+
+        if (assignment.getTaskCompletion() != null) {
+            throw new BadRequestException("Cannot reassign a completed task assignment");
+        }
+
+        if (!member.getHousehold().getId().equals(assignment.getTask().getHousehold().getId())) {
+            throw new BadRequestException("Household member does not belong to this task's household");
+        }
+
+        assignment.setHouseholdMember(member);
+        return taskAssignmentMapper.toDto(taskAssignmentRepository.save(assignment));
+    }
+
     public TaskAssignmentResponseDto assignTaskToMember(UUID taskId, UUID memberId) {
         HouseholdMember member = getMember(memberId);
         Task task = getTask(taskId);
+
+        if (!member.getHousehold().getId().equals(task.getHousehold().getId())) {
+            throw new BadRequestException("Household member does not belong to this task's household");
+        }
 
         return createAssignment(task, member, calculateTaskDueDate(task));
     }
@@ -162,5 +188,10 @@ public class TaskAssignmentService {
     private Task getTask(UUID id) {
         return taskRepository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Task with id " + id + " not found"));
+    }
+
+    private TaskAssignment getAssignment(UUID id) {
+        return taskAssignmentRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Assignment with id " + id + " not found"));
     }
 }

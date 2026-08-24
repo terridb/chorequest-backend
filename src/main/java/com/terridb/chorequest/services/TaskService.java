@@ -81,6 +81,11 @@ public class TaskService {
 
         HouseholdMember member = householdMemberRepository.findById(responsibleMemberId)
                 .orElseThrow(() -> new RecordNotFoundException("Household member with id " + responsibleMemberId + " not found"));
+
+        if (!member.getHousehold().getId().equals(task.getHousehold().getId())) {
+            throw new BadRequestException("Household member does not belong to this task's household");
+        }
+
         task.setResponsibleMember(member);
     }
 
