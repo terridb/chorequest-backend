@@ -1,0 +1,64 @@
+## Endpoints
+
+### Users
+
+| Method | Path | Description | Status |
+|---|---|---|---|
+| POST | /users | Create user | planned |
+| GET | /users/{id} | Get profile | planned |
+| PATCH | /users/{id} | Update profile (name, avatar) | planned |
+| GET | /users/{id}/households | List households the user belongs to | planned |
+
+### Households
+
+| Method | Path | Description | Status |
+|---|---|---|---|
+| POST | /households | Create household | planned |
+| GET | /households/{id} | Get household details | planned |
+| PATCH | /households/{id} | Update household (name, type, photo, city, zipcode) | planned |
+| DELETE | /households/{id} | Delete household | planned |
+
+### Household members
+
+| Method | Path | Description | Status |
+|---|---|---|---|
+| POST | /households/{id}/members | Add a user to a household | planned |
+| GET | /households/{id}/members | List members (e.g. leaderboard/points view) | planned |
+| DELETE | /households/{id}/members/{memberId} | Remove a member | planned |
+
+### Tasks
+
+| Method | Path | Description | Status |
+|---|---|---|---|
+| POST | /households/{id}/tasks | Create a task in a household | existing |
+| GET | /households/{id}/tasks | List tasks for a household | existing |
+| GET | /tasks/{id} | Get a single task | existing |
+| PATCH | /tasks/{id} | Update task (title, effort, frequency, points, etc.) | existing |
+| DELETE | /tasks/{id} | Delete task | existing |
+
+### Task assignments
+
+| Method | Path | Description | Status |
+|---|---|---|---|
+| POST | /tasks/{id}/assignments | Assign a task to a household member with a due date | existing |
+| GET | /assignments/{id} | Get a single assignment | existing |
+| GET | /tasks/{id}/assignments | Assignment history/current assignees for a task | existing |
+| GET | /members/{id}/assignments | A member's assigned tasks | existing |
+| PATCH | /assignments/{id} | Reassign / change due date | existing |
+| DELETE | /assignments/{id} | Cancel an assignment | existing |
+
+### Task completions
+
+| Method | Path | Description | Status |
+|---|---|---|---|
+| POST | /assignments/{id}/completions | Mark an assignment done (awards points) | existing |
+| GET | /completions/{id} | Get a single completion | existing |
+| GET | /household-members/{id}/completions | A member's completion history | existing |
+
+Completions are not undoable — there is no delete endpoint for them.
+
+### Leaderboard
+
+| Method | Path | Description | Status |
+|---|---|---|---|
+| GET | /households/{id}/leaderboard | Members ranked by points | planned |
