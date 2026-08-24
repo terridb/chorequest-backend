@@ -30,19 +30,19 @@
 
 | Method | Path | Description | Status |
 |---|---|---|---|
-| POST | /households/{id}/tasks | Create a task in a household | planned |
+| POST | /households/{id}/tasks | Create a task in a household | existing |
 | GET | /households/{id}/tasks | List tasks for a household | existing |
-| GET | /tasks/{id} | Get a single task | planned |
-| PATCH | /tasks/{id} | Update task (title, effort, frequency, points, etc.) | planned |
-| DELETE | /tasks/{id} | Delete task | planned |
+| GET | /tasks/{id} | Get a single task | existing |
+| PATCH | /tasks/{id} | Update task (title, effort, frequency, points, etc.) | existing |
+| DELETE | /tasks/{id} | Delete task | existing |
 
 ### Task assignments
 
 | Method | Path | Description | Status |
 |---|---|---|---|
 | POST | /tasks/{id}/assignments | Assign a task to a household member with a due date | planned |
-| GET | /tasks/{id}/assignments | Assignment history/current assignees for a task | planned |
-| GET | /household-members/{id}/assignments | A member's assigned tasks | planned |
+| GET | /tasks/{id}/assignments | Assignment history/current assignees for a task | existing |
+| GET | /members/{id}/assignments | A member's assigned tasks | existing |
 | PATCH | /assignments/{id} | Reassign / change due date | planned |
 | DELETE | /assignments/{id} | Cancel an assignment | planned |
 
