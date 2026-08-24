@@ -3,10 +3,8 @@ package com.terridb.chorequest.dtos.tasks;
 import com.terridb.chorequest.entities.enums.AssignmentStrategy;
 import com.terridb.chorequest.entities.enums.Effort;
 import com.terridb.chorequest.entities.enums.Frequency;
-import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -34,10 +32,6 @@ public class TaskRequestDto {
     private LocalDate startingDate;
 
     private boolean alwaysSameDay;
-
-    @PositiveOrZero(message = "Default points must be zero or positive")
-    @Max(value = 10, message = "Default points must be at most 10")
-    private int defaultPoints;
 
     @NotNull(message = "Assignment strategy is required")
     private AssignmentStrategy strategy;

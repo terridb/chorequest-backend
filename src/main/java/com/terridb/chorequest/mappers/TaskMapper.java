@@ -4,6 +4,7 @@ import com.terridb.chorequest.dtos.tasks.TaskPatchDto;
 import com.terridb.chorequest.dtos.tasks.TaskRequestDto;
 import com.terridb.chorequest.dtos.tasks.TaskResponseDto;
 import com.terridb.chorequest.entities.Task;
+import com.terridb.chorequest.entities.enums.Effort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -22,7 +23,7 @@ public class TaskMapper {
         task.setFrequency(requestDto.getFrequency());
         task.setStartingDate(requestDto.getStartingDate());
         task.setAlwaysSameDay(requestDto.isAlwaysSameDay());
-        task.setDefaultPoints(requestDto.getDefaultPoints());
+        task.setDefaultPoints(pointsForEffort(requestDto.getEffort()));
         task.setStrategy(requestDto.getStrategy());
 
         return task;
@@ -37,6 +38,7 @@ public class TaskMapper {
         }
         if (patchDto.getEffort() != null) {
             task.setEffort(patchDto.getEffort());
+            task.setDefaultPoints(pointsForEffort(patchDto.getEffort()));
         }
         if (patchDto.getFrequency() != null) {
             task.setFrequency(patchDto.getFrequency());
@@ -46,9 +48,6 @@ public class TaskMapper {
         }
         if (patchDto.getAlwaysSameDay() != null) {
             task.setAlwaysSameDay(patchDto.getAlwaysSameDay());
-        }
-        if (patchDto.getDefaultPoints() != null) {
-            task.setDefaultPoints(patchDto.getDefaultPoints());
         }
         if (patchDto.getStrategy() != null) {
             task.setStrategy(patchDto.getStrategy());
@@ -79,5 +78,14 @@ public class TaskMapper {
         return tasks.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
+    }
+
+    private int pointsForEffort(Effort effort) {
+        return switch (effort) {
+            case NONE -> 1;
+            case SMALL -> 2;
+            case MEDIUM -> 4;
+            case BIG -> 8;
+        };
     }
 }

@@ -51,8 +51,9 @@
 
 | Method | Path | Description | Status |
 |---|---|---|---|
-| POST | /assignments/{id}/completions | Mark an assignment done (awards points) | planned |
-| GET | /household-members/{id}/completions | A member's completion history | planned |
+| POST | /assignments/{id}/completions | Mark an assignment done (awards points) | existing |
+| GET | /completions/{id} | Get a single completion | existing |
+| GET | /household-members/{id}/completions | A member's completion history | existing |
 
 Completions are not undoable — there is no delete endpoint for them.
 
