@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -34,5 +35,5 @@ public class Goal extends BaseEntity {
     private GoalStatus status = GoalStatus.ACTIVE;
 
     @OneToMany(mappedBy = "goal")
-    private Set<GoalContribution> contributions;
+    private Set<GoalContribution> contributions = new HashSet<>();
 }
