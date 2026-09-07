@@ -1,5 +1,6 @@
 package com.terridb.chorequest.repositories;
 
+import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.Task;
 import com.terridb.chorequest.entities.TaskAssignment;
@@ -13,6 +14,8 @@ public interface TaskAssignmentRepository extends JpaRepository<TaskAssignment, 
     Set<TaskAssignment> findByTaskOrderByDueDateDesc(Task task);
 
     Set<TaskAssignment> findByHouseholdMemberOrderByDueDateDesc(HouseholdMember householdMember);
+
+    Set<TaskAssignment> findByTask_HouseholdAndTaskCompletionIsNullOrderByDueDateAsc(Household household);
 
     boolean existsByTaskAndTaskCompletionIsNull(Task task);
 

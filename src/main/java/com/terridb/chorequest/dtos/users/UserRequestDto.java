@@ -18,4 +18,5 @@ public class UserRequestDto {
 
     @Size(max = 1024, message = "Avatar URL must be at most 1024 characters")
     private String avatarUrl;
+//    todo change avatarUrl in request
 }

@@ -37,6 +37,11 @@ public class TaskAssignmentController {
         return ResponseEntity.ok(taskAssignmentService.getAssignmentsForMember(id));
     }
 
+    @GetMapping("/households/{id}/assignments/open")
+    public ResponseEntity<List<TaskAssignmentResponseDto>> getOpenAssignmentsForHousehold(@PathVariable UUID id) {
+        return ResponseEntity.ok(taskAssignmentService.getOpenAssignmentsForHousehold(id));
+    }
+
     @PostMapping("/tasks/{taskId}/members/{memberId}/assignments")
     public ResponseEntity<TaskAssignmentResponseDto> assignTaskToMember(@PathVariable UUID taskId,
                                                                         @PathVariable UUID memberId) {
