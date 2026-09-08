@@ -2,6 +2,7 @@ package com.terridb.chorequest.controllers;
 
 import com.terridb.chorequest.dtos.taskCompletions.TaskCompletionRequestDto;
 import com.terridb.chorequest.dtos.taskCompletions.TaskCompletionResponseDto;
+import com.terridb.chorequest.dtos.taskCompletions.TaskCompletionSimpleResponseDto;
 import com.terridb.chorequest.services.TaskCompletionService;
 import com.terridb.chorequest.utils.UrlUtil;
 import jakarta.validation.Valid;
@@ -38,6 +39,11 @@ public class TaskCompletionController {
         URI location = UrlUtil.buildCreatedUri("/api/completions/{id}", dto.getId());
 
         return ResponseEntity.created(location).body(dto);
+    }
+
+    @GetMapping("goals/{id}/completions")
+    public ResponseEntity<List<TaskCompletionSimpleResponseDto>> getCompletionsForGoal(@PathVariable UUID id) {
+        return ResponseEntity.ok(taskCompletionService.getCompletionsForGoal(id));
     }
 }
 

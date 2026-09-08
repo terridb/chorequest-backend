@@ -11,7 +11,6 @@ import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.TaskMapper;
 import com.terridb.chorequest.repositories.HouseholdMemberRepository;
-import com.terridb.chorequest.repositories.HouseholdRepository;
 import com.terridb.chorequest.repositories.TaskRepository;
 import org.springframework.stereotype.Service;
 
@@ -21,20 +20,20 @@ import java.util.UUID;
 @Service
 public class TaskService {
     private final TaskRepository taskRepository;
-    private final HouseholdRepository householdRepository;
     private final HouseholdMemberRepository householdMemberRepository;
     private final TaskMapper taskMapper;
+    private final HouseholdService householdService;
 
-    public TaskService(TaskRepository taskRepository, HouseholdRepository householdRepository,
+    public TaskService(TaskRepository taskRepository, HouseholdService householdService,
                         HouseholdMemberRepository householdMemberRepository, TaskMapper taskMapper) {
         this.taskRepository = taskRepository;
-        this.householdRepository = householdRepository;
+        this.householdService = householdService;
         this.householdMemberRepository = householdMemberRepository;
         this.taskMapper = taskMapper;
     }
 
     public List<TaskResponseDto> getTasksForHousehold(UUID householdId) {
-        Household household = getHousehold(householdId);
+        Household household = householdService.getHousehold(householdId);
         List<Task> tasks = taskRepository.findByHouseholdOrderByCreatedAtDesc(household);
 
         return taskMapper.toDto(tasks);
@@ -45,7 +44,7 @@ public class TaskService {
     }
 
     public TaskResponseDto postTask(UUID householdId, TaskRequestDto input) {
-        Household household = getHousehold(householdId);
+        Household household = householdService.getHousehold(householdId);
 
         Task task = taskMapper.toEntity(input, null);
         task.setHousehold(household);
@@ -87,11 +86,6 @@ public class TaskService {
         }
 
         task.setResponsibleMember(member);
-    }
-
-    private Household getHousehold(UUID id) {
-        return householdRepository.findById(id)
-                .orElseThrow(() -> new RecordNotFoundException("Household with id " + id + " not found"));
     }
 
     private Task getTask(UUID id) {

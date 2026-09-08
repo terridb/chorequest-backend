@@ -46,6 +46,7 @@ public class UserMapper {
     public UserResponseSimpleDto toSimpleDto(User user) {
         UserResponseSimpleDto responseDto = new UserResponseSimpleDto();
 
+        responseDto.setId(user.getId());
         responseDto.setFirstName(user.getFirstName());
         responseDto.setAvatarUrl(user.getAvatarUrl());
 

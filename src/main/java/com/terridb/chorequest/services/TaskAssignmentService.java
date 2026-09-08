@@ -2,6 +2,7 @@ package com.terridb.chorequest.services;
 
 import com.terridb.chorequest.dtos.taskAssignments.TaskAssignmentRequestDto;
 import com.terridb.chorequest.dtos.taskAssignments.TaskAssignmentResponseDto;
+import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.Task;
 import com.terridb.chorequest.entities.TaskAssignment;
@@ -29,12 +30,14 @@ public class TaskAssignmentService {
     private final TaskAssignmentRepository taskAssignmentRepository;
     private final TaskAssignmentMapper taskAssignmentMapper;
     private final HouseholdMemberRepository householdMemberRepository;
+    private final HouseholdService householdService;
 
-    public TaskAssignmentService(TaskRepository taskRepository, TaskAssignmentRepository taskAssignmentRepository, TaskAssignmentMapper taskAssignmentMapper, HouseholdMemberRepository householdMemberRepository) {
+    public TaskAssignmentService(TaskRepository taskRepository, TaskAssignmentRepository taskAssignmentRepository, TaskAssignmentMapper taskAssignmentMapper, HouseholdMemberRepository householdMemberRepository, HouseholdService householdService) {
         this.taskRepository = taskRepository;
         this.taskAssignmentRepository = taskAssignmentRepository;
         this.taskAssignmentMapper = taskAssignmentMapper;
         this.householdMemberRepository = householdMemberRepository;
+        this.householdService = householdService;
     }
 
     public TaskAssignmentResponseDto getAssignmentById(UUID id) {
@@ -51,6 +54,13 @@ public class TaskAssignmentService {
     public List<TaskAssignmentResponseDto> getAssignmentsForMember(UUID id) {
         HouseholdMember member = getMember(id);
         Set<TaskAssignment> assignments = taskAssignmentRepository.findByHouseholdMemberOrderByDueDateDesc(member);
+
+        return taskAssignmentMapper.toDto(assignments.stream().toList());
+    }
+
+    public List<TaskAssignmentResponseDto> getOpenAssignmentsForHousehold(UUID householdId) {
+        Household household = householdService.getHousehold(householdId);
+        Set<TaskAssignment> assignments = taskAssignmentRepository.findByTask_HouseholdAndTaskCompletionIsNullOrderByDueDateAsc(household);
 
         return taskAssignmentMapper.toDto(assignments.stream().toList());
     }

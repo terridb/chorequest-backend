@@ -82,10 +82,10 @@ public class TaskMapper {
 
     private int pointsForEffort(Effort effort) {
         return switch (effort) {
-            case NONE -> 1;
-            case SMALL -> 2;
-            case MEDIUM -> 4;
-            case BIG -> 8;
+            case NONE -> 5;
+            case SMALL -> 10;
+            case MEDIUM -> 15;
+            case BIG -> 30;
         };
     }
 }
