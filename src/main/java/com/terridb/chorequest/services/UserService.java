@@ -2,13 +2,13 @@ package com.terridb.chorequest.services;
 
 import com.terridb.chorequest.dtos.users.MeRequestDto;
 import com.terridb.chorequest.dtos.users.UserPatchDto;
-import com.terridb.chorequest.dtos.users.UserRequestDto;
 import com.terridb.chorequest.dtos.users.UserResponseDto;
 import com.terridb.chorequest.entities.User;
 import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.UserMapper;
 import com.terridb.chorequest.repositories.UserRepository;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -23,30 +23,36 @@ public class UserService {
         this.userMapper = userMapper;
     }
 
-    public UserResponseDto getUserById(UUID id) {
-        return userMapper.toDto(getUser(id));
-    }
-
-    public UserResponseDto postUser(UserRequestDto input) {
-        User user = userMapper.toEntity(input, null);
-        return userMapper.toDto(userRepository.save(user));
-    }
-
-    public UserResponseDto updateUser(UUID id, UserPatchDto input) {
+    public UserResponseDto getUserById(UUID id, String sub) {
         User user = getUser(id);
+        requireSelf(user, sub);
+
+        return userMapper.toDto(user);
+    }
+
+    public UserResponseDto updateUser(UUID id, UserPatchDto input, String sub) {
+        User user = getUser(id);
+        requireSelf(user, sub);
         User patchedUser = userMapper.patch(input, user);
 
         return userMapper.toDto(userRepository.save(patchedUser));
     }
 
-    public void deleteUser(UUID id) {
+    public void deleteUser(UUID id, String sub) {
         User user = getUser(id);
+        requireSelf(user, sub);
 
         if (!user.getMemberships().isEmpty()) {
             throw new BadRequestException("Cannot delete a user who is still a member of a household");
         }
 
         userRepository.delete(user);
+    }
+
+    private void requireSelf(User user, String sub) {
+        if (!user.getSub().equals(sub)) {
+            throw new AccessDeniedException("Cannot access another user's account");
+        }
     }
 
     public User getUser(UUID id) {

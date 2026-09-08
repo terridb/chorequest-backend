@@ -1,7 +1,6 @@
 package com.terridb.chorequest.mappers;
 
 import com.terridb.chorequest.dtos.users.UserPatchDto;
-import com.terridb.chorequest.dtos.users.UserRequestDto;
 import com.terridb.chorequest.dtos.users.UserResponseDto;
 import com.terridb.chorequest.dtos.users.UserResponseSimpleDto;
 import com.terridb.chorequest.entities.User;
@@ -12,18 +11,6 @@ import java.util.stream.Collectors;
 
 @Component
 public class UserMapper {
-    public User toEntity(UserRequestDto requestDto, User user) {
-        if (user == null) {
-            user = new User();
-        }
-
-        user.setFirstName(requestDto.getFirstName());
-        user.setLastName(requestDto.getLastName());
-        user.setAvatarUrl(requestDto.getAvatarUrl());
-
-        return user;
-    }
-
     public User patch(UserPatchDto patchDto, User user) {
         if (patchDto.getFirstName() != null) {
             user.setFirstName(patchDto.getFirstName());

@@ -2,17 +2,14 @@ package com.terridb.chorequest.controllers;
 
 import com.terridb.chorequest.dtos.users.MeRequestDto;
 import com.terridb.chorequest.dtos.users.UserPatchDto;
-import com.terridb.chorequest.dtos.users.UserRequestDto;
 import com.terridb.chorequest.dtos.users.UserResponseDto;
 import com.terridb.chorequest.services.UserService;
-import com.terridb.chorequest.utils.UrlUtil;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-import java.net.URI;
 import java.util.UUID;
 
 @RestController
@@ -25,8 +22,8 @@ public class UserController {
     }
 
     @GetMapping("/users/{id}")
-    public ResponseEntity<UserResponseDto> getUserById(@PathVariable UUID id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+    public ResponseEntity<UserResponseDto> getUserById(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(userService.getUserById(id, jwt.getSubject()));
     }
 
     @PostMapping("/users/me")
@@ -38,22 +35,14 @@ public class UserController {
         return ResponseEntity.ok(userService.getOrCreateCurrentUser(jwt.getSubject(), profile));
     }
 
-    @PostMapping("/users")
-    public ResponseEntity<UserResponseDto> postUser(@Valid @RequestBody UserRequestDto input) {
-        UserResponseDto dto = userService.postUser(input);
-        URI location = UrlUtil.buildCreatedUri("/api/users/{id}", dto.getId());
-
-        return ResponseEntity.created(location).body(dto);
-    }
-
     @PatchMapping("/users/{id}")
-    public ResponseEntity<UserResponseDto> updateUser(@PathVariable UUID id, @Valid @RequestBody UserPatchDto input) {
-        return ResponseEntity.ok(userService.updateUser(id, input));
+    public ResponseEntity<UserResponseDto> updateUser(@PathVariable UUID id, @Valid @RequestBody UserPatchDto input, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(userService.updateUser(id, input, jwt.getSubject()));
     }
 
     @DeleteMapping("/users/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable UUID id) {
-        userService.deleteUser(id);
+    public ResponseEntity<Void> deleteUser(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        userService.deleteUser(id, jwt.getSubject());
         return ResponseEntity.noContent().build();
     }
 }
