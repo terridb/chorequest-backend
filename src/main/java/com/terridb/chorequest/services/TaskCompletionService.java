@@ -2,6 +2,8 @@ package com.terridb.chorequest.services;
 
 import com.terridb.chorequest.dtos.taskCompletions.TaskCompletionRequestDto;
 import com.terridb.chorequest.dtos.taskCompletions.TaskCompletionResponseDto;
+import com.terridb.chorequest.dtos.taskCompletions.TaskCompletionSimpleResponseDto;
+import com.terridb.chorequest.entities.Goal;
 import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.TaskAssignment;
 import com.terridb.chorequest.entities.TaskCompletion;
@@ -23,12 +25,14 @@ public class TaskCompletionService {
     private final HouseholdMemberRepository householdMemberRepository;
     private final TaskCompletionRepository taskCompletionRepository;
     private final TaskCompletionMapper taskCompletionMapper;
+    private final GoalService goalService;
 
-    public TaskCompletionService(TaskAssignmentRepository taskAssignmentRepository, HouseholdMemberRepository householdMemberRepository, TaskCompletionRepository taskCompletionRepository, TaskCompletionMapper taskCompletionMapper) {
+    public TaskCompletionService(TaskAssignmentRepository taskAssignmentRepository, HouseholdMemberRepository householdMemberRepository, TaskCompletionRepository taskCompletionRepository, TaskCompletionMapper taskCompletionMapper, GoalService goalService) {
         this.taskAssignmentRepository = taskAssignmentRepository;
         this.householdMemberRepository = householdMemberRepository;
         this.taskCompletionRepository = taskCompletionRepository;
         this.taskCompletionMapper = taskCompletionMapper;
+        this.goalService = goalService;
     }
 
     @Transactional
@@ -51,6 +55,12 @@ public class TaskCompletionService {
         completion.setTaskAssignment(assignment);
         completion.setCompletedBy(member);
 
+        goalService.getActiveGoalForHousehold(member.getHousehold())
+                .ifPresent(goal -> {
+                    completion.setGoal(goal);
+                    goalService.addPointsToGoal(goal, completion.getRewardedPoints());
+                });
+
         member.setPoints(member.getPoints() + completion.getRewardedPoints());
         householdMemberRepository.save(member);
 
@@ -59,16 +69,24 @@ public class TaskCompletionService {
     }
 
     public TaskCompletionResponseDto getCompletionById(UUID id) {
-        TaskCompletion completion = taskCompletionRepository.findById(id)
-                .orElseThrow(() -> new RecordNotFoundException("Completion with id " + id + " not found"));
+        return taskCompletionMapper.toDto(getCompletion(id));
+    }
 
-        return taskCompletionMapper.toDto(completion);
+    public TaskCompletion getCompletion(UUID id) {
+        return taskCompletionRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Completion with id " + id + " not found"));
     }
 
     public List<TaskCompletionResponseDto> getCompletionsByMember(UUID id) {
         HouseholdMember member = getMember(id);
         List<TaskCompletion> completions = taskCompletionRepository.findByCompletedByOrderByCompletedAtDesc(member);
         return taskCompletionMapper.toDto(completions);
+    }
+
+    public List<TaskCompletionSimpleResponseDto> getCompletionsForGoal(UUID goalId) {
+        Goal goal = goalService.getGoal(goalId);
+        List<TaskCompletion> completions = taskCompletionRepository.findByGoalOrderByRewardedPointsDesc(goal);
+        return taskCompletionMapper.toSimpleDto(completions);
     }
 
     private HouseholdMember getMember(UUID id) {

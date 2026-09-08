@@ -12,6 +12,7 @@ import com.terridb.chorequest.mappers.GoalMapper;
 import com.terridb.chorequest.repositories.GoalRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,7 +42,7 @@ public class GoalService {
 
     public GoalResponseDto getCurrentGoalForHousehold(UUID id) {
         Household household = householdService.getHousehold(id);
-        Goal goal = getHouseholdActiveGoal(household)
+        Goal goal = getActiveGoalForHousehold(household)
                 .orElseThrow(() -> new RecordNotFoundException("Household with id " + id + " has no active goal"));
 
         return goalMapper.toDto(goal);
@@ -54,7 +55,7 @@ public class GoalService {
 
         if (inputStatus != null) {
             if (inputStatus == GoalStatus.ACTIVE) {
-                Optional<Goal> householdActiveGoal = getHouseholdActiveGoal(goal.getHousehold());
+                Optional<Goal> householdActiveGoal = getActiveGoalForHousehold(goal.getHousehold());
                 if (householdActiveGoal.isPresent() && !householdActiveGoal.get().getId().equals(goal.getId())) {
                     throw new BadRequestException("Household already has an active goal");
                 }
@@ -74,7 +75,7 @@ public class GoalService {
     public GoalResponseDto postGoal(UUID householdId, GoalRequestDto input) {
         Household household = householdService.getHousehold(householdId);
 
-        if (getHouseholdActiveGoal(household).isPresent()) {
+        if (getActiveGoalForHousehold(household).isPresent()) {
             throw new BadRequestException("Household already has an active goal");
         }
 
@@ -84,11 +85,22 @@ public class GoalService {
         return goalMapper.toDto(goalRepository.save(goal));
     }
 
-    private Optional<Goal> getHouseholdActiveGoal(Household household) {
+    public Optional<Goal> getActiveGoalForHousehold(Household household) {
         return goalRepository.findByHouseholdAndStatus(household, GoalStatus.ACTIVE);
     }
 
-    private Goal getGoal(UUID id) {
+    public void addPointsToGoal(Goal goal, int points) {
+        goal.setCurrentPoints(goal.getCurrentPoints() + points);
+
+        if (goal.getCurrentPoints() >= goal.getGoalPoints()) {
+            goal.setStatus(GoalStatus.COMPLETED);
+            goal.setCompletionDate(LocalDateTime.now());
+        }
+
+        goalRepository.save(goal);
+    }
+
+    public Goal getGoal(UUID id) {
         return goalRepository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Goal with id " + id + " not found"));
     }
