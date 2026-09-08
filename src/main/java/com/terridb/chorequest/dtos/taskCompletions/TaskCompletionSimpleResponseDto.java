@@ -1,4 +1,4 @@
-package com.terridb.chorequest.dtos.contributions;
+package com.terridb.chorequest.dtos.taskCompletions;
 
 import com.terridb.chorequest.dtos.householdMembers.HouseholdMemberResponseDto;
 import lombok.Getter;
@@ -8,8 +8,8 @@ import java.util.UUID;
 
 @Getter
 @Setter
-public class GoalContributionSimpleResponseDto {
+public class TaskCompletionSimpleResponseDto {
     private UUID id;
     private HouseholdMemberResponseDto member;
-    private int points;
+    private int rewardedPoints;
 }

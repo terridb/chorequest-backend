@@ -42,14 +42,6 @@ VALUES
     ('77777777-7777-7777-7777-77777777777b', now(), now(), '44444444-4444-4444-4444-444444444444', '66666666-6666-6666-6666-666666666661', CURRENT_DATE + INTERVAL '2 days')
 ON CONFLICT (id) DO NOTHING;
 
--- Task completions (assignment 2, the one due today, is left open/incomplete)
-INSERT INTO task_completions (id, created_at, updated_at, completed_at, rewarded_points, task_assignment_id, completed_by_id)
-VALUES
-    ('88888888-8888-8888-8888-888888888881', now(), now(), now() - INTERVAL '1 day', 5, '77777777-7777-7777-7777-777777777771', '44444444-4444-4444-4444-444444444444'),
-    ('88888888-8888-8888-8888-888888888882', now(), now(), now() - INTERVAL '2 days', 10, '77777777-7777-7777-7777-777777777773', '55555555-5555-5555-5555-555555555555'),
-    ('88888888-8888-8888-8888-888888888883', now(), now(), now() - INTERVAL '1 day', 5, '77777777-7777-7777-7777-777777777774', '55555555-5555-5555-5555-555555555555')
-ON CONFLICT (id) DO NOTHING;
-
 -- Goals
 INSERT INTO goals (id, created_at, updated_at, household_id, goal_points, title, description, completion_date, current_points, status)
 VALUES
@@ -57,9 +49,11 @@ VALUES
     ('99999999-9999-9999-9999-999999999992', now(), now(), '33333333-3333-3333-3333-333333333333', 500, 'Weekend Getaway', 'Save up points towards a weekend trip', NULL, 0, 'ACTIVE')
 ON CONFLICT (id) DO NOTHING;
 
--- Goal contributions
-INSERT INTO goal_contributions (id, created_at, updated_at, goal_id, household_member_id, points)
+-- Task completions (assignment 2, the one due today, is left open/incomplete)
+-- The first two completions also count as contributions towards the "Family Movie Night" goal
+INSERT INTO task_completions (id, created_at, updated_at, completed_at, rewarded_points, task_assignment_id, completed_by_id, goal_id)
 VALUES
-    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1', now(), now(), '99999999-9999-9999-9999-999999999991', '44444444-4444-4444-4444-444444444444', 10),
-    ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa2', now(), now(), '99999999-9999-9999-9999-999999999991', '55555555-5555-5555-5555-555555555555', 10)
+    ('88888888-8888-8888-8888-888888888881', now(), now(), now() - INTERVAL '1 day', 5, '77777777-7777-7777-7777-777777777771', '44444444-4444-4444-4444-444444444444', '99999999-9999-9999-9999-999999999991'),
+    ('88888888-8888-8888-8888-888888888882', now(), now(), now() - INTERVAL '2 days', 10, '77777777-7777-7777-7777-777777777773', '55555555-5555-5555-5555-555555555555', '99999999-9999-9999-9999-999999999991'),
+    ('88888888-8888-8888-8888-888888888883', now(), now(), now() - INTERVAL '1 day', 5, '77777777-7777-7777-7777-777777777774', '55555555-5555-5555-5555-555555555555', NULL)
 ON CONFLICT (id) DO NOTHING;

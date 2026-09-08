@@ -5,20 +5,21 @@ import com.terridb.chorequest.dtos.goals.GoalRequestDto;
 import com.terridb.chorequest.dtos.goals.GoalResponseDto;
 import com.terridb.chorequest.dtos.goals.GoalSimpleResponseDto;
 import com.terridb.chorequest.entities.Goal;
+import com.terridb.chorequest.entities.TaskCompletion;
 import com.terridb.chorequest.entities.enums.GoalStatus;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
 public class GoalMapper {
-    private final GoalContributionMapper goalContributionMapper;
+    private final TaskCompletionMapper taskCompletionMapper;
 
-    public GoalMapper(GoalContributionMapper goalContributionMapper) {
-        this.goalContributionMapper = goalContributionMapper;
+    public GoalMapper(TaskCompletionMapper taskCompletionMapper) {
+        this.taskCompletionMapper = taskCompletionMapper;
     }
 
     public Goal toEntity(GoalRequestDto requestDto, Goal goal) {
@@ -64,7 +65,10 @@ public class GoalMapper {
         responseDto.setCompletionDate(goal.getCompletionDate());
         responseDto.setCurrentPoints(goal.getCurrentPoints());
         responseDto.setStatus(goal.getStatus());
-        responseDto.setContributions(goalContributionMapper.toSimpleDto(new ArrayList<>(goal.getContributions())));
+        List<TaskCompletion> contributions = goal.getContributions().stream()
+                .sorted(Comparator.comparingInt(TaskCompletion::getRewardedPoints).reversed())
+                .collect(Collectors.toList());
+        responseDto.setContributions(taskCompletionMapper.toSimpleDto(contributions));
 
         return responseDto;
     }

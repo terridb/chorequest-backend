@@ -26,6 +26,10 @@ public class TaskCompletion extends BaseEntity {
     @JoinColumn(name = "completed_by_id", nullable = false)
     private HouseholdMember completedBy;
 
+    @ManyToOne
+    @JoinColumn(name = "goal_id")
+    private Goal goal;
+
     @Override
     protected void onPersist() {
         completedAt = LocalDateTime.now();

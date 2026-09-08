@@ -1,6 +1,6 @@
 package com.terridb.chorequest.dtos.goals;
 
-import com.terridb.chorequest.dtos.contributions.GoalContributionSimpleResponseDto;
+import com.terridb.chorequest.dtos.taskCompletions.TaskCompletionSimpleResponseDto;
 import com.terridb.chorequest.entities.enums.GoalStatus;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,5 +20,5 @@ public class GoalResponseDto {
     private LocalDateTime completionDate;
     private int currentPoints;
     private GoalStatus status;
-    private List<GoalContributionSimpleResponseDto> contributions;
+    private List<TaskCompletionSimpleResponseDto> contributions;
 }

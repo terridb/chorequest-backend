@@ -35,5 +35,5 @@ public class Goal extends BaseEntity {
     private GoalStatus status = GoalStatus.ACTIVE;
 
     @OneToMany(mappedBy = "goal")
-    private Set<GoalContribution> contributions = new HashSet<>();
+    private Set<TaskCompletion> contributions = new HashSet<>();
 }

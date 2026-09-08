@@ -32,7 +32,4 @@ public class HouseholdMember extends BaseEntity {
 
     @OneToMany(mappedBy = "householdMember")
     private Set<TaskAssignment> assignments;
-
-    @OneToMany(mappedBy = "householdMember")
-    private Set<GoalContribution> goalContributions;
 }
