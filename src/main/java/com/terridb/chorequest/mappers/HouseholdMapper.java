@@ -1,5 +1,6 @@
 package com.terridb.chorequest.mappers;
 
+import com.terridb.chorequest.dtos.households.HouseholdPatchDto;
 import com.terridb.chorequest.dtos.households.HouseholdRequestDto;
 import com.terridb.chorequest.dtos.households.HouseholdResponseDto;
 import com.terridb.chorequest.entities.Household;
@@ -27,6 +28,26 @@ public class HouseholdMapper {
         household.setPhotoUrl(requestDto.getPhotoUrl());
         household.setCity(requestDto.getCity());
         household.setZipcode(requestDto.getZipcode());
+
+        return household;
+    }
+
+    public Household patch(HouseholdPatchDto patchDto, Household household) {
+        if (patchDto.getName() != null) {
+            household.setName(patchDto.getName());
+        }
+        if (patchDto.getType() != null) {
+            household.setType(patchDto.getType());
+        }
+        if (patchDto.getPhotoUrl() != null) {
+            household.setPhotoUrl(patchDto.getPhotoUrl());
+        }
+        if (patchDto.getCity() != null) {
+            household.setCity(patchDto.getCity());
+        }
+        if (patchDto.getZipcode() != null) {
+            household.setZipcode(patchDto.getZipcode());
+        }
 
         return household;
     }
