@@ -19,5 +19,7 @@ public interface TaskAssignmentRepository extends JpaRepository<TaskAssignment, 
 
     boolean existsByTaskAndTaskCompletionIsNull(Task task);
 
+    boolean existsByHouseholdMemberAndTaskCompletionIsNull(HouseholdMember householdMember);
+
     Optional<TaskAssignment> findFirstByTaskOrderByCreatedAtDesc(Task task);
 }
