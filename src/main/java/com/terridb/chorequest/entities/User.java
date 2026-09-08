@@ -15,6 +15,9 @@ import java.util.Set;
 @NoArgsConstructor
 @Table(name = "users")
 public class User extends BaseEntity {
+    @Column(name = "auth0_sub", nullable = false, unique = true, length = 255)
+    private String sub;
+
     @Column(nullable = false, length = 50)
     private String firstName;
 

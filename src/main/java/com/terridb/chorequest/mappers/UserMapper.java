@@ -1,5 +1,6 @@
 package com.terridb.chorequest.mappers;
 
+import com.terridb.chorequest.dtos.users.UserPatchDto;
 import com.terridb.chorequest.dtos.users.UserRequestDto;
 import com.terridb.chorequest.dtos.users.UserResponseDto;
 import com.terridb.chorequest.dtos.users.UserResponseSimpleDto;
@@ -19,6 +20,20 @@ public class UserMapper {
         user.setFirstName(requestDto.getFirstName());
         user.setLastName(requestDto.getLastName());
         user.setAvatarUrl(requestDto.getAvatarUrl());
+
+        return user;
+    }
+
+    public User patch(UserPatchDto patchDto, User user) {
+        if (patchDto.getFirstName() != null) {
+            user.setFirstName(patchDto.getFirstName());
+        }
+        if (patchDto.getLastName() != null) {
+            user.setLastName(patchDto.getLastName());
+        }
+        if (patchDto.getAvatarUrl() != null) {
+            user.setAvatarUrl(patchDto.getAvatarUrl());
+        }
 
         return user;
     }
