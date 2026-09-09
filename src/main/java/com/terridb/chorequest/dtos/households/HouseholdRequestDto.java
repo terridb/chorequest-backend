@@ -7,8 +7,6 @@ import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.UUID;
-
 @Getter
 @Setter
 public class HouseholdRequestDto {
@@ -18,9 +16,6 @@ public class HouseholdRequestDto {
 
     @NotNull(message = "Type is required")
     private HouseholdType type;
-
-    @NotNull(message = "Creator user id is required")
-    private UUID creatorUserId;
 
     @Size(max = 1024, message = "Photo URL must be at most 1024 characters")
     private String photoUrl;

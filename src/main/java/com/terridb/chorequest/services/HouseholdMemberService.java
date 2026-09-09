@@ -34,19 +34,26 @@ public class HouseholdMemberService {
         this.taskRepository = taskRepository;
     }
 
-    public HouseholdMemberResponseDto getMemberById(UUID id) {
-        return householdMemberMapper.toDto(getMember(id));
+    public HouseholdMemberResponseDto getMemberById(UUID id, String sub) {
+        HouseholdMember member = getMember(id);
+        householdService.requireMembership(member.getHousehold(), sub);
+
+        return householdMemberMapper.toDto(member);
     }
 
-    public List<HouseholdMemberResponseDto> getMembersForHousehold(UUID householdId) {
+    public List<HouseholdMemberResponseDto> getMembersForHousehold(UUID householdId, String sub) {
         Household household = householdService.getHousehold(householdId);
+        householdService.requireMembership(household, sub);
+
         List<HouseholdMember> members = householdMemberRepository.findByHouseholdOrderByCreatedAtAsc(household);
 
         return householdMemberMapper.toDto(members);
     }
 
-    public HouseholdMemberResponseDto postMember(UUID householdId, HouseholdMemberRequestDto input) {
+    public HouseholdMemberResponseDto postMember(UUID householdId, HouseholdMemberRequestDto input, String sub) {
         Household household = householdService.getHousehold(householdId);
+        householdService.requireMembership(household, sub);
+
         User user = userService.getUser(input.getUserId());
 
         if (householdMemberRepository.existsByHouseholdAndUser(household, user)) {
@@ -59,8 +66,9 @@ public class HouseholdMemberService {
         return householdMemberMapper.toDto(householdMemberRepository.save(member));
     }
 
-    public void deleteMember(UUID id) {
+    public void deleteMember(UUID id, String sub) {
         HouseholdMember member = getMember(id);
+        householdService.requireMembership(member.getHousehold(), sub);
 
         if (taskAssignmentRepository.existsByHouseholdMemberAndTaskCompletionIsNull(member)) {
             throw new BadRequestException("Cannot delete a household member with open task assignments");

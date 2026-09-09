@@ -10,10 +10,10 @@ import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.HouseholdMapper;
 import com.terridb.chorequest.repositories.HouseholdMemberRepository;
 import com.terridb.chorequest.repositories.HouseholdRepository;
+import com.terridb.chorequest.exceptions.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -31,21 +31,26 @@ public class HouseholdService {
         this.userService = userService;
     }
 
-    public HouseholdResponseDto getHouseholdById(UUID id) {
-        return householdMapper.toDto(getHousehold(id));
+    public HouseholdResponseDto getHouseholdById(UUID id, String sub) {
+        Household household = getHousehold(id);
+        requireMembership(household, sub);
+
+        return householdMapper.toDto(household);
     }
 
-    public List<HouseholdResponseDto> getHouseholdsByUser(UUID id) {
-        Set<HouseholdMember> memberships = userService.getUser(id).getMemberships();
-        List<Household> households = memberships.stream()
+    public List<HouseholdResponseDto> getHouseholdsByUser(UUID id, String sub) {
+        User user = userService.getUser(id);
+        requireSelf(user, sub);
+
+        List<Household> households = user.getMemberships().stream()
                 .map(HouseholdMember::getHousehold)
                 .collect(Collectors.toList());
 
         return householdMapper.toDto(households);
     }
 
-    public HouseholdResponseDto postHousehold(HouseholdRequestDto input) {
-        User creator = userService.getUser(input.getCreatorUserId());
+    public HouseholdResponseDto postHousehold(HouseholdRequestDto input, String sub) {
+        User creator = userService.getUserBySub(sub);
         Household household = householdMapper.toEntity(input, null);
         Household savedHousehold = householdRepository.save(household);
 
@@ -58,19 +63,36 @@ public class HouseholdService {
         return householdMapper.toDto(savedHousehold);
     }
 
-    public HouseholdResponseDto updateHousehold(UUID id, HouseholdPatchDto input) {
+    public HouseholdResponseDto updateHousehold(UUID id, HouseholdPatchDto input, String sub) {
         Household household = getHousehold(id);
+        requireMembership(household, sub);
         Household patchedHousehold = householdMapper.patch(input, household);
 
         return householdMapper.toDto(householdRepository.save(patchedHousehold));
     }
 
-    public void deleteHousehold(UUID id) {
-        householdRepository.delete(getHousehold(id));
+    public void deleteHousehold(UUID id, String sub) {
+        Household household = getHousehold(id);
+        requireMembership(household, sub);
+
+        householdRepository.delete(household);
     }
 
     public Household getHousehold(UUID id) {
         return householdRepository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Household with id " + id + " not found"));
+    }
+
+    public void requireMembership(Household household, String sub) {
+        User user = userService.getUserBySub(sub);
+        if (!householdMemberRepository.existsByHouseholdAndUser(household, user)) {
+            throw new AccessDeniedException("Not a member of this household");
+        }
+    }
+
+    private void requireSelf(User user, String sub) {
+        if (!user.getSub().equals(sub)) {
+            throw new AccessDeniedException("Cannot access another user's households");
+        }
     }
 }

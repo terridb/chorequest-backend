@@ -6,6 +6,8 @@ import com.terridb.chorequest.services.HouseholdMemberService;
 import com.terridb.chorequest.utils.UrlUtil;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -22,26 +24,26 @@ public class HouseholdMemberController {
     }
 
     @GetMapping("/members/{id}")
-    public ResponseEntity<HouseholdMemberResponseDto> getMemberById(@PathVariable UUID id) {
-        return ResponseEntity.ok(householdMemberService.getMemberById(id));
+    public ResponseEntity<HouseholdMemberResponseDto> getMemberById(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(householdMemberService.getMemberById(id, jwt.getSubject()));
     }
 
     @GetMapping("/households/{householdId}/members")
-    public ResponseEntity<List<HouseholdMemberResponseDto>> getMembersForHousehold(@PathVariable UUID householdId) {
-        return ResponseEntity.ok(householdMemberService.getMembersForHousehold(householdId));
+    public ResponseEntity<List<HouseholdMemberResponseDto>> getMembersForHousehold(@PathVariable UUID householdId, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(householdMemberService.getMembersForHousehold(householdId, jwt.getSubject()));
     }
 
     @PostMapping("/households/{householdId}/members")
-    public ResponseEntity<HouseholdMemberResponseDto> postMember(@PathVariable UUID householdId, @Valid @RequestBody HouseholdMemberRequestDto input) {
-        HouseholdMemberResponseDto dto = householdMemberService.postMember(householdId, input);
+    public ResponseEntity<HouseholdMemberResponseDto> postMember(@PathVariable UUID householdId, @Valid @RequestBody HouseholdMemberRequestDto input, @AuthenticationPrincipal Jwt jwt) {
+        HouseholdMemberResponseDto dto = householdMemberService.postMember(householdId, input, jwt.getSubject());
         URI location = UrlUtil.buildCreatedUri("/api/members/{id}", dto.getId());
 
         return ResponseEntity.created(location).body(dto);
     }
 
     @DeleteMapping("/members/{id}")
-    public ResponseEntity<Void> deleteMember(@PathVariable UUID id) {
-        householdMemberService.deleteMember(id);
+    public ResponseEntity<Void> deleteMember(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        householdMemberService.deleteMember(id, jwt.getSubject());
         return ResponseEntity.noContent().build();
     }
 }
