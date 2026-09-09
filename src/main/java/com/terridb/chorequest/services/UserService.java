@@ -8,7 +8,7 @@ import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.UserMapper;
 import com.terridb.chorequest.repositories.UserRepository;
-import org.springframework.security.access.AccessDeniedException;
+import com.terridb.chorequest.exceptions.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -65,6 +65,11 @@ public class UserService {
                 .orElseGet(() -> userRepository.save(buildNewUser(sub, profile)));
 
         return userMapper.toDto(user);
+    }
+
+    public User getUserBySub(String sub) {
+        return userRepository.findBySub(sub).
+                orElseThrow(() -> new RecordNotFoundException("User with sub " + sub + " not found"));
     }
 
     private User buildNewUser(String sub, MeRequestDto profile) {
