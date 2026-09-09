@@ -26,19 +26,22 @@ public class TaskCompletionService {
     private final TaskCompletionRepository taskCompletionRepository;
     private final TaskCompletionMapper taskCompletionMapper;
     private final GoalService goalService;
+    private final HouseholdService householdService;
 
-    public TaskCompletionService(TaskAssignmentRepository taskAssignmentRepository, HouseholdMemberRepository householdMemberRepository, TaskCompletionRepository taskCompletionRepository, TaskCompletionMapper taskCompletionMapper, GoalService goalService) {
+    public TaskCompletionService(TaskAssignmentRepository taskAssignmentRepository, HouseholdMemberRepository householdMemberRepository, TaskCompletionRepository taskCompletionRepository, TaskCompletionMapper taskCompletionMapper, GoalService goalService, HouseholdService householdService) {
         this.taskAssignmentRepository = taskAssignmentRepository;
         this.householdMemberRepository = householdMemberRepository;
         this.taskCompletionRepository = taskCompletionRepository;
         this.taskCompletionMapper = taskCompletionMapper;
         this.goalService = goalService;
+        this.householdService = householdService;
     }
 
     @Transactional
-    public TaskCompletionResponseDto markAssignmentAsDone(UUID id, TaskCompletionRequestDto input) {
+    public TaskCompletionResponseDto markAssignmentAsDone(UUID id, TaskCompletionRequestDto input, String sub) {
         TaskAssignment assignment = taskAssignmentRepository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Assignment with id " + id + " not found"));
+        householdService.requireMembership(assignment.getTask().getHousehold(), sub);
 
         HouseholdMember member = getMember(input.getCompletedByMemberId());
 
@@ -68,8 +71,11 @@ public class TaskCompletionService {
         return taskCompletionMapper.toDto(savedCompletion);
     }
 
-    public TaskCompletionResponseDto getCompletionById(UUID id) {
-        return taskCompletionMapper.toDto(getCompletion(id));
+    public TaskCompletionResponseDto getCompletionById(UUID id, String sub) {
+        TaskCompletion completion = getCompletion(id);
+        householdService.requireMembership(completion.getTaskAssignment().getTask().getHousehold(), sub);
+
+        return taskCompletionMapper.toDto(completion);
     }
 
     public TaskCompletion getCompletion(UUID id) {
@@ -77,14 +83,18 @@ public class TaskCompletionService {
                 .orElseThrow(() -> new RecordNotFoundException("Completion with id " + id + " not found"));
     }
 
-    public List<TaskCompletionResponseDto> getCompletionsByMember(UUID id) {
+    public List<TaskCompletionResponseDto> getCompletionsByMember(UUID id, String sub) {
         HouseholdMember member = getMember(id);
+        householdService.requireMembership(member.getHousehold(), sub);
+
         List<TaskCompletion> completions = taskCompletionRepository.findByCompletedByOrderByCompletedAtDesc(member);
         return taskCompletionMapper.toDto(completions);
     }
 
-    public List<TaskCompletionSimpleResponseDto> getCompletionsForGoal(UUID goalId) {
+    public List<TaskCompletionSimpleResponseDto> getCompletionsForGoal(UUID goalId, String sub) {
         Goal goal = goalService.getGoal(goalId);
+        householdService.requireMembership(goal.getHousehold(), sub);
+
         List<TaskCompletion> completions = taskCompletionRepository.findByGoalOrderByRewardedPointsDesc(goal);
         return taskCompletionMapper.toSimpleDto(completions);
     }

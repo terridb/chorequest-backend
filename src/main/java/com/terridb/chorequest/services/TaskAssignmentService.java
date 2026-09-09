@@ -40,33 +40,44 @@ public class TaskAssignmentService {
         this.householdService = householdService;
     }
 
-    public TaskAssignmentResponseDto getAssignmentById(UUID id) {
-        return taskAssignmentMapper.toDto(getAssignment(id));
+    public TaskAssignmentResponseDto getAssignmentById(UUID id, String sub) {
+        TaskAssignment assignment = getAssignment(id);
+        householdService.requireMembership(assignment.getTask().getHousehold(), sub);
+
+        return taskAssignmentMapper.toDto(assignment);
     }
 
-    public List<TaskAssignmentResponseDto> getAssignmentsForTask(UUID id) {
+    public List<TaskAssignmentResponseDto> getAssignmentsForTask(UUID id, String sub) {
         Task task = getTask(id);
+        householdService.requireMembership(task.getHousehold(), sub);
+
         Set<TaskAssignment> assignments = taskAssignmentRepository.findByTaskOrderByDueDateDesc(task);
 
         return taskAssignmentMapper.toDto(assignments.stream().toList());
     }
 
-    public List<TaskAssignmentResponseDto> getAssignmentsForMember(UUID id) {
+    public List<TaskAssignmentResponseDto> getAssignmentsForMember(UUID id, String sub) {
         HouseholdMember member = getMember(id);
+        householdService.requireMembership(member.getHousehold(), sub);
+
         Set<TaskAssignment> assignments = taskAssignmentRepository.findByHouseholdMemberOrderByDueDateDesc(member);
 
         return taskAssignmentMapper.toDto(assignments.stream().toList());
     }
 
-    public List<TaskAssignmentResponseDto> getOpenAssignmentsForHousehold(UUID householdId) {
+    public List<TaskAssignmentResponseDto> getOpenAssignmentsForHousehold(UUID householdId, String sub) {
         Household household = householdService.getHousehold(householdId);
+        householdService.requireMembership(household, sub);
+
         Set<TaskAssignment> assignments = taskAssignmentRepository.findByTask_HouseholdAndTaskCompletionIsNullOrderByDueDateAsc(household);
 
         return taskAssignmentMapper.toDto(assignments.stream().toList());
     }
 
-    public TaskAssignmentResponseDto updateAssignment(UUID id, TaskAssignmentRequestDto input) {
+    public TaskAssignmentResponseDto updateAssignment(UUID id, TaskAssignmentRequestDto input, String sub) {
         TaskAssignment assignment = getAssignment(id);
+        householdService.requireMembership(assignment.getTask().getHousehold(), sub);
+
         HouseholdMember member = getMember(input.getHouseholdMemberId());
 
         if (assignment.getTaskCompletion() != null) {
@@ -81,8 +92,9 @@ public class TaskAssignmentService {
         return taskAssignmentMapper.toDto(taskAssignmentRepository.save(assignment));
     }
 
-    public void deleteAssignment(UUID id) {
+    public void deleteAssignment(UUID id, String sub) {
         TaskAssignment assignment = getAssignment(id);
+        householdService.requireMembership(assignment.getTask().getHousehold(), sub);
 
         if (assignment.getTaskCompletion() != null) {
             throw new BadRequestException("Cannot delete a completed task assignment");
@@ -91,9 +103,10 @@ public class TaskAssignmentService {
         taskAssignmentRepository.delete(assignment);
     }
 
-    public TaskAssignmentResponseDto assignTaskToMember(UUID taskId, UUID memberId) {
+    public TaskAssignmentResponseDto assignTaskToMember(UUID taskId, UUID memberId, String sub) {
         HouseholdMember member = getMember(memberId);
         Task task = getTask(taskId);
+        householdService.requireMembership(task.getHousehold(), sub);
 
         if (!member.getHousehold().getId().equals(task.getHousehold().getId())) {
             throw new BadRequestException("Household member does not belong to this task's household");

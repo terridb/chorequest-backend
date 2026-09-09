@@ -29,27 +29,36 @@ public class GoalService {
         this.householdService = householdService;
     }
 
-    public GoalResponseDto getGoalById(UUID id) {
-        return goalMapper.toDto(getGoal(id));
+    public GoalResponseDto getGoalById(UUID id, String sub) {
+        Goal goal = getGoal(id);
+        householdService.requireMembership(goal.getHousehold(), sub);
+
+        return goalMapper.toDto(goal);
     }
 
-    public List<GoalResponseDto> getGoalsForHousehold(UUID id) {
+    public List<GoalResponseDto> getGoalsForHousehold(UUID id, String sub) {
         Household household = householdService.getHousehold(id);
+        householdService.requireMembership(household, sub);
+
         List<Goal> goals = goalRepository.findByHouseholdOrderByCreatedAtDesc(household);
 
         return goalMapper.toDto(goals);
     }
 
-    public GoalResponseDto getCurrentGoalForHousehold(UUID id) {
+    public GoalResponseDto getCurrentGoalForHousehold(UUID id, String sub) {
         Household household = householdService.getHousehold(id);
+        householdService.requireMembership(household, sub);
+
         Goal goal = getActiveGoalForHousehold(household)
                 .orElseThrow(() -> new RecordNotFoundException("Household with id " + id + " has no active goal"));
 
         return goalMapper.toDto(goal);
     }
 
-    public GoalResponseDto updateGoal(UUID id, GoalPatchDto input) {
+    public GoalResponseDto updateGoal(UUID id, GoalPatchDto input, String sub) {
         Goal goal = getGoal(id);
+        householdService.requireMembership(goal.getHousehold(), sub);
+
         GoalStatus inputStatus = input.getStatus();
         GoalStatus goalStatus = goal.getStatus();
 
@@ -72,8 +81,9 @@ public class GoalService {
         return goalMapper.toDto(goalRepository.save(patchedGoal));
     }
 
-    public GoalResponseDto postGoal(UUID householdId, GoalRequestDto input) {
+    public GoalResponseDto postGoal(UUID householdId, GoalRequestDto input, String sub) {
         Household household = householdService.getHousehold(householdId);
+        householdService.requireMembership(household, sub);
 
         if (getActiveGoalForHousehold(household).isPresent()) {
             throw new BadRequestException("Household already has an active goal");

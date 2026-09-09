@@ -32,19 +32,25 @@ public class TaskService {
         this.taskMapper = taskMapper;
     }
 
-    public List<TaskResponseDto> getTasksForHousehold(UUID householdId) {
+    public List<TaskResponseDto> getTasksForHousehold(UUID householdId, String sub) {
         Household household = householdService.getHousehold(householdId);
+        householdService.requireMembership(household, sub);
+
         List<Task> tasks = taskRepository.findByHouseholdOrderByCreatedAtDesc(household);
 
         return taskMapper.toDto(tasks);
     }
 
-    public TaskResponseDto getTaskById(UUID id) {
-        return taskMapper.toDto(getTask(id));
+    public TaskResponseDto getTaskById(UUID id, String sub) {
+        Task task = getTask(id);
+        householdService.requireMembership(task.getHousehold(), sub);
+
+        return taskMapper.toDto(task);
     }
 
-    public TaskResponseDto postTask(UUID householdId, TaskRequestDto input) {
+    public TaskResponseDto postTask(UUID householdId, TaskRequestDto input, String sub) {
         Household household = householdService.getHousehold(householdId);
+        householdService.requireMembership(household, sub);
 
         Task task = taskMapper.toEntity(input, null);
         task.setHousehold(household);
@@ -53,8 +59,9 @@ public class TaskService {
         return taskMapper.toDto(taskRepository.save(task));
     }
 
-    public TaskResponseDto updateTask(UUID id, TaskPatchDto input) {
+    public TaskResponseDto updateTask(UUID id, TaskPatchDto input, String sub) {
         Task task =  getTask(id);
+        householdService.requireMembership(task.getHousehold(), sub);
         Task patchedTask = taskMapper.patch(input, task);
 
         if (input.getStrategy() != null || input.getResponsibleMemberId() != null) {
@@ -64,8 +71,11 @@ public class TaskService {
         return taskMapper.toDto(taskRepository.save(patchedTask));
     }
 
-    public void deleteTask(UUID id) {
-        taskRepository.delete(getTask(id));
+    public void deleteTask(UUID id, String sub) {
+        Task task = getTask(id);
+        householdService.requireMembership(task.getHousehold(), sub);
+
+        taskRepository.delete(task);
     }
 
     private void applyResponsibleMember(Task task, AssignmentStrategy strategy, UUID responsibleMemberId) {
