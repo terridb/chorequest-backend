@@ -6,11 +6,11 @@ import com.terridb.chorequest.dtos.households.HouseholdResponseDto;
 import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.User;
+import com.terridb.chorequest.exceptions.AccessDeniedException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.HouseholdMapper;
 import com.terridb.chorequest.repositories.HouseholdMemberRepository;
 import com.terridb.chorequest.repositories.HouseholdRepository;
-import com.terridb.chorequest.exceptions.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;

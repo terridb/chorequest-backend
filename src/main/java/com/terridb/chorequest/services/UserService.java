@@ -4,11 +4,11 @@ import com.terridb.chorequest.dtos.users.MeRequestDto;
 import com.terridb.chorequest.dtos.users.UserPatchDto;
 import com.terridb.chorequest.dtos.users.UserResponseDto;
 import com.terridb.chorequest.entities.User;
+import com.terridb.chorequest.exceptions.AccessDeniedException;
 import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.UserMapper;
 import com.terridb.chorequest.repositories.UserRepository;
-import com.terridb.chorequest.exceptions.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
