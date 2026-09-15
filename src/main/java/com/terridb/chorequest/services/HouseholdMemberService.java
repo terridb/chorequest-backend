@@ -1,6 +1,5 @@
 package com.terridb.chorequest.services;
 
-import com.terridb.chorequest.dtos.householdMembers.HouseholdMemberRequestDto;
 import com.terridb.chorequest.dtos.householdMembers.HouseholdMemberResponseDto;
 import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdMember;
@@ -50,22 +49,6 @@ public class HouseholdMemberService {
         List<HouseholdMember> members = householdMemberRepository.findByHouseholdOrderByCreatedAtAsc(household);
 
         return householdMemberMapper.toDto(members);
-    }
-
-    public HouseholdMemberResponseDto postMember(UUID householdId, HouseholdMemberRequestDto input, String sub) {
-        Household household = householdService.getHousehold(householdId);
-        householdService.requireMembership(household, sub);
-
-        User user = userService.getUser(input.getUserId());
-
-        if (householdMemberRepository.existsByHouseholdAndUser(household, user)) {
-            throw new BadRequestException("User is already a member of this household");
-        }
-
-        HouseholdMember member = new HouseholdMember();
-        member.setHousehold(household);
-        member.setUser(user);
-        return householdMemberMapper.toDto(householdMemberRepository.save(member));
     }
 
     public HouseholdMemberResponseDto promoteMember(UUID id, String sub) {

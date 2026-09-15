@@ -39,4 +39,7 @@ public class Household extends BaseEntity {
 
     @OneToMany(mappedBy = "household", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Goal> goals = new HashSet<>();
+
+    @OneToMany(mappedBy = "household", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<HouseholdInvite> invites = new HashSet<>();
 }
