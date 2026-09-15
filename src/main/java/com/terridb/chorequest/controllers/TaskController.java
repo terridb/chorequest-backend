@@ -1,8 +1,10 @@
 package com.terridb.chorequest.controllers;
 
+import com.terridb.chorequest.dtos.tasks.EffortPointsDto;
 import com.terridb.chorequest.dtos.tasks.TaskPatchDto;
 import com.terridb.chorequest.dtos.tasks.TaskRequestDto;
 import com.terridb.chorequest.dtos.tasks.TaskResponseDto;
+import com.terridb.chorequest.entities.enums.Effort;
 import com.terridb.chorequest.services.TaskService;
 import com.terridb.chorequest.utils.UrlUtil;
 import jakarta.validation.Valid;
@@ -12,8 +14,10 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api")
@@ -22,6 +26,20 @@ public class TaskController {
 
     public TaskController(TaskService taskService) {
         this.taskService = taskService;
+    }
+
+    @GetMapping("/efforts")
+    public ResponseEntity<List<EffortPointsDto>> getEfforts() {
+        List<EffortPointsDto> dtos = Arrays.stream(Effort.values())
+                .map(effort -> {
+                    EffortPointsDto dto = new EffortPointsDto();
+                    dto.setEffort(effort);
+                    dto.setPoints(effort.getPoints());
+                    return dto;
+                })
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
     }
 
     @GetMapping("/households/{householdId}/tasks")
