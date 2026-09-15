@@ -41,6 +41,11 @@ public class HouseholdMemberController {
         return ResponseEntity.created(location).body(dto);
     }
 
+    @PostMapping("/members/{id}/promote")
+    public ResponseEntity<HouseholdMemberResponseDto> promoteMember(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(householdMemberService.promoteMember(id, jwt.getSubject()));
+    }
+
     @DeleteMapping("/members/{id}")
     public ResponseEntity<Void> deleteMember(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
         householdMemberService.deleteMember(id, jwt.getSubject());

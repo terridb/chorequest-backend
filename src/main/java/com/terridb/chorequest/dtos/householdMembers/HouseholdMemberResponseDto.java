@@ -1,6 +1,7 @@
 package com.terridb.chorequest.dtos.householdMembers;
 
 import com.terridb.chorequest.dtos.users.UserResponseSimpleDto;
+import com.terridb.chorequest.entities.enums.HouseholdMemberRole;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,4 +13,5 @@ public class HouseholdMemberResponseDto {
     private UUID id;
     private UserResponseSimpleDto user;
     private int points;
+    private HouseholdMemberRole role;
 }

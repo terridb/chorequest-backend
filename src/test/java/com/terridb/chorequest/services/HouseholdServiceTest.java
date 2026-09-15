@@ -1,10 +1,12 @@
 package com.terridb.chorequest.services;
 
+import com.terridb.chorequest.dtos.households.HouseholdPatchDto;
 import com.terridb.chorequest.dtos.households.HouseholdRequestDto;
 import com.terridb.chorequest.dtos.households.HouseholdResponseDto;
 import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.User;
+import com.terridb.chorequest.entities.enums.HouseholdMemberRole;
 import com.terridb.chorequest.entities.enums.HouseholdType;
 import com.terridb.chorequest.exceptions.AccessDeniedException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
@@ -73,6 +75,60 @@ class HouseholdServiceTest {
         when(householdMemberRepository.existsByHouseholdAndUser(household, outsider)).thenReturn(false);
 
         assertThatThrownBy(() -> householdService.requireMembership(household, OUTSIDER_SUB))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void requireAdmin_passes_whenUserIsAdmin() {
+        Household household = new Household();
+        User admin = userWithSub(MEMBER_SUB);
+        HouseholdMember membership = new HouseholdMember();
+        membership.setRole(HouseholdMemberRole.ADMIN);
+        when(userService.getUserBySub(MEMBER_SUB)).thenReturn(admin);
+        when(householdMemberRepository.findByHouseholdAndUser(household, admin)).thenReturn(Optional.of(membership));
+
+        householdService.requireAdmin(household, MEMBER_SUB);
+    }
+
+    @Test
+    void requireAdmin_throwsAccessDenied_whenUserIsMemberButNotAdmin() {
+        Household household = new Household();
+        User member = userWithSub(MEMBER_SUB);
+        HouseholdMember membership = new HouseholdMember();
+        membership.setRole(HouseholdMemberRole.MEMBER);
+        when(userService.getUserBySub(MEMBER_SUB)).thenReturn(member);
+        when(householdMemberRepository.findByHouseholdAndUser(household, member)).thenReturn(Optional.of(membership));
+
+        assertThatThrownBy(() -> householdService.requireAdmin(household, MEMBER_SUB))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void requireAdmin_throwsAccessDenied_whenUserIsNotMember() {
+        Household household = new Household();
+        User outsider = userWithSub(OUTSIDER_SUB);
+        when(userService.getUserBySub(OUTSIDER_SUB)).thenReturn(outsider);
+        when(householdMemberRepository.findByHouseholdAndUser(household, outsider)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> householdService.requireAdmin(household, OUTSIDER_SUB))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void updateHousehold_throwsAccessDenied_whenCallerIsMemberButNotAdmin() {
+        UUID id = UUID.randomUUID();
+        Household household = new Household();
+        User member = userWithSub(MEMBER_SUB);
+        HouseholdMember membership = new HouseholdMember();
+        membership.setRole(HouseholdMemberRole.MEMBER);
+        when(householdRepository.findById(id)).thenReturn(Optional.of(household));
+        when(userService.getUserBySub(MEMBER_SUB)).thenReturn(member);
+        when(householdMemberRepository.findByHouseholdAndUser(household, member)).thenReturn(Optional.of(membership));
+
+        HouseholdPatchDto patch = new HouseholdPatchDto();
+        patch.setName("Renamed");
+
+        assertThatThrownBy(() -> householdService.updateHousehold(id, patch, MEMBER_SUB))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
@@ -147,6 +203,7 @@ class HouseholdServiceTest {
         ArgumentCaptor<HouseholdMember> memberCaptor = ArgumentCaptor.forClass(HouseholdMember.class);
         verify(householdMemberRepository).save(memberCaptor.capture());
         assertThat(memberCaptor.getValue().getUser()).isEqualTo(creator);
+        assertThat(memberCaptor.getValue().getRole()).isEqualTo(HouseholdMemberRole.ADMIN);
     }
 
     @Test
@@ -156,7 +213,7 @@ class HouseholdServiceTest {
         User outsider = userWithSub(OUTSIDER_SUB);
         when(householdRepository.findById(id)).thenReturn(Optional.of(household));
         when(userService.getUserBySub(OUTSIDER_SUB)).thenReturn(outsider);
-        when(householdMemberRepository.existsByHouseholdAndUser(household, outsider)).thenReturn(false);
+        when(householdMemberRepository.findByHouseholdAndUser(household, outsider)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> householdService.deleteHousehold(id, OUTSIDER_SUB))
                 .isInstanceOf(AccessDeniedException.class);

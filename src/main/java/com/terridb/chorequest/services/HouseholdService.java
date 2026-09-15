@@ -6,6 +6,7 @@ import com.terridb.chorequest.dtos.households.HouseholdResponseDto;
 import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.User;
+import com.terridb.chorequest.entities.enums.HouseholdMemberRole;
 import com.terridb.chorequest.exceptions.AccessDeniedException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.HouseholdMapper;
@@ -57,6 +58,7 @@ public class HouseholdService {
         HouseholdMember creatorMembership = new HouseholdMember();
         creatorMembership.setHousehold(savedHousehold);
         creatorMembership.setUser(creator);
+        creatorMembership.setRole(HouseholdMemberRole.ADMIN);
         householdMemberRepository.save(creatorMembership);
         savedHousehold.getMembers().add(creatorMembership);
 
@@ -65,7 +67,7 @@ public class HouseholdService {
 
     public HouseholdResponseDto updateHousehold(UUID id, HouseholdPatchDto input, String sub) {
         Household household = getHousehold(id);
-        requireMembership(household, sub);
+        requireAdmin(household, sub);
         Household patchedHousehold = householdMapper.patch(input, household);
 
         return householdMapper.toDto(householdRepository.save(patchedHousehold));
@@ -73,7 +75,7 @@ public class HouseholdService {
 
     public void deleteHousehold(UUID id, String sub) {
         Household household = getHousehold(id);
-        requireMembership(household, sub);
+        requireAdmin(household, sub);
 
         householdRepository.delete(household);
     }
@@ -87,6 +89,16 @@ public class HouseholdService {
         User user = userService.getUserBySub(sub);
         if (!householdMemberRepository.existsByHouseholdAndUser(household, user)) {
             throw new AccessDeniedException("Not a member of this household");
+        }
+    }
+
+    public void requireAdmin(Household household, String sub) {
+        User user = userService.getUserBySub(sub);
+        HouseholdMember membership = householdMemberRepository.findByHouseholdAndUser(household, user)
+                .orElseThrow(() -> new AccessDeniedException("Not a member of this household"));
+
+        if (membership.getRole() != HouseholdMemberRole.ADMIN) {
+            throw new AccessDeniedException("Only a household admin can perform this action");
         }
     }
 

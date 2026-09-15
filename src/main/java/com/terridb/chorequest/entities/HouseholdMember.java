@@ -1,5 +1,6 @@
 package com.terridb.chorequest.entities;
 
+import com.terridb.chorequest.entities.enums.HouseholdMemberRole;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,10 @@ public class HouseholdMember extends BaseEntity {
 
     @Column(nullable = false)
     private int points = 0;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private HouseholdMemberRole role = HouseholdMemberRole.MEMBER;
 
     @OneToMany(mappedBy = "householdMember")
     private Set<TaskAssignment> assignments;

@@ -5,6 +5,8 @@ import com.terridb.chorequest.dtos.householdMembers.HouseholdMemberResponseDto;
 import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.User;
+import com.terridb.chorequest.entities.enums.HouseholdMemberRole;
+import com.terridb.chorequest.exceptions.AccessDeniedException;
 import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.HouseholdMemberMapper;
@@ -66,9 +68,29 @@ public class HouseholdMemberService {
         return householdMemberMapper.toDto(householdMemberRepository.save(member));
     }
 
+    public HouseholdMemberResponseDto promoteMember(UUID id, String sub) {
+        HouseholdMember member = getMember(id);
+        householdService.requireAdmin(member.getHousehold(), sub);
+
+        if (member.getRole() == HouseholdMemberRole.ADMIN) {
+            throw new BadRequestException("Member is already an admin");
+        }
+
+        member.setRole(HouseholdMemberRole.ADMIN);
+        return householdMemberMapper.toDto(householdMemberRepository.save(member));
+    }
+
     public void deleteMember(UUID id, String sub) {
         HouseholdMember member = getMember(id);
-        householdService.requireMembership(member.getHousehold(), sub);
+        Household household = member.getHousehold();
+        User caller = userService.getUserBySub(sub);
+        HouseholdMember callerMembership = householdMemberRepository.findByHouseholdAndUser(household, caller)
+                .orElseThrow(() -> new AccessDeniedException("Not a member of this household"));
+
+        boolean isSelf = callerMembership.getId().equals(member.getId());
+        if (!isSelf && callerMembership.getRole() != HouseholdMemberRole.ADMIN) {
+            throw new AccessDeniedException("Only a household admin can remove another member");
+        }
 
         if (taskAssignmentRepository.existsByHouseholdMemberAndTaskCompletionIsNull(member)) {
             throw new BadRequestException("Cannot delete a household member with open task assignments");
@@ -76,6 +98,15 @@ public class HouseholdMemberService {
 
         if (taskRepository.existsByResponsibleMember(member)) {
             throw new BadRequestException("Cannot delete a household member who is responsible for a task");
+        }
+
+        if (member.getRole() == HouseholdMemberRole.ADMIN
+                && !householdMemberRepository.existsByHouseholdAndRoleAndIdNot(household, HouseholdMemberRole.ADMIN, member.getId())) {
+            householdMemberRepository.findFirstByHouseholdAndIdNotOrderByCreatedAtAsc(household, member.getId())
+                    .ifPresent(successor -> {
+                        successor.setRole(HouseholdMemberRole.ADMIN);
+                        householdMemberRepository.save(successor);
+                    });
         }
 
         householdMemberRepository.delete(member);
