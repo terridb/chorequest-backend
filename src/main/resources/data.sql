@@ -2,7 +2,7 @@
 
 INSERT INTO users (id, created_at, updated_at, first_name, last_name, avatar_url, auth0_sub)
 VALUES
-    ('11111111-1111-1111-1111-111111111111', now(), now(), 'Terri', 'de Boer', NULL, 'seed|terri'),
+    ('11111111-1111-1111-1111-111111111111', now(), now(), 'Terri', 'de Boer', NULL, 'google-oauth2|105956923986449548530'),
     ('22222222-2222-2222-2222-222222222222', now(), now(), 'Alex', 'Janssen', NULL, 'seed|alex')
 ON CONFLICT (id) DO NOTHING;
 
@@ -46,7 +46,7 @@ ON CONFLICT (id) DO NOTHING;
 INSERT INTO goals (id, created_at, updated_at, household_id, goal_points, title, description, completion_date, current_points, status)
 VALUES
     ('99999999-9999-9999-9999-999999999991', now(), now(), '33333333-3333-3333-3333-333333333333', 50, 'Family Movie Night', 'Earn enough points for a movie night with snacks', NULL, 20, 'ACTIVE'),
-    ('99999999-9999-9999-9999-999999999992', now(), now(), '33333333-3333-3333-3333-333333333333', 500, 'Weekend Getaway', 'Save up points towards a weekend trip', NULL, 0, 'ACTIVE')
+    ('99999999-9999-9999-9999-999999999992', now(), now(), '33333333-3333-3333-3333-333333333333', 500, 'Weekend Getaway', 'Save up points towards a weekend trip', NULL, 0, 'CANCELLED')
 ON CONFLICT (id) DO NOTHING;
 
 -- Task completions (assignment 2, the one due today, is left open/incomplete)
