@@ -27,14 +27,16 @@ public class TaskCompletionService {
     private final TaskCompletionMapper taskCompletionMapper;
     private final GoalService goalService;
     private final HouseholdService householdService;
+    private final TaskAssignmentService taskAssignmentService;
 
-    public TaskCompletionService(TaskAssignmentRepository taskAssignmentRepository, HouseholdMemberRepository householdMemberRepository, TaskCompletionRepository taskCompletionRepository, TaskCompletionMapper taskCompletionMapper, GoalService goalService, HouseholdService householdService) {
+    public TaskCompletionService(TaskAssignmentRepository taskAssignmentRepository, HouseholdMemberRepository householdMemberRepository, TaskCompletionRepository taskCompletionRepository, TaskCompletionMapper taskCompletionMapper, GoalService goalService, HouseholdService householdService, TaskAssignmentService taskAssignmentService) {
         this.taskAssignmentRepository = taskAssignmentRepository;
         this.householdMemberRepository = householdMemberRepository;
         this.taskCompletionRepository = taskCompletionRepository;
         this.taskCompletionMapper = taskCompletionMapper;
         this.goalService = goalService;
         this.householdService = householdService;
+        this.taskAssignmentService = taskAssignmentService;
     }
 
     @Transactional
@@ -68,6 +70,8 @@ public class TaskCompletionService {
         householdMemberRepository.save(member);
 
         TaskCompletion savedCompletion = taskCompletionRepository.save(completion);
+        taskAssignmentService.createNextAssignmentIfRecurring(assignment.getTask());
+
         return taskCompletionMapper.toDto(savedCompletion);
     }
 

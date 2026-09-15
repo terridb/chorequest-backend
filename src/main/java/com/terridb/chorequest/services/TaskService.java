@@ -23,13 +23,16 @@ public class TaskService {
     private final HouseholdMemberRepository householdMemberRepository;
     private final TaskMapper taskMapper;
     private final HouseholdService householdService;
+    private final TaskAssignmentService taskAssignmentService;
 
     public TaskService(TaskRepository taskRepository, HouseholdService householdService,
-                        HouseholdMemberRepository householdMemberRepository, TaskMapper taskMapper) {
+                        HouseholdMemberRepository householdMemberRepository, TaskMapper taskMapper,
+                        TaskAssignmentService taskAssignmentService) {
         this.taskRepository = taskRepository;
         this.householdService = householdService;
         this.householdMemberRepository = householdMemberRepository;
         this.taskMapper = taskMapper;
+        this.taskAssignmentService = taskAssignmentService;
     }
 
     public List<TaskResponseDto> getTasksForHousehold(UUID householdId, String sub) {
@@ -56,7 +59,10 @@ public class TaskService {
         task.setHousehold(household);
         applyResponsibleMember(task, input.getStrategy(), input.getResponsibleMemberId());
 
-        return taskMapper.toDto(taskRepository.save(task));
+        Task savedTask = taskRepository.save(task);
+        taskAssignmentService.createInitialAssignment(savedTask);
+
+        return taskMapper.toDto(savedTask);
     }
 
     public TaskResponseDto updateTask(UUID id, TaskPatchDto input, String sub) {

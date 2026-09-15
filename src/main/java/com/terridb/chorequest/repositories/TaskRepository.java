@@ -12,7 +12,7 @@ import java.util.UUID;
 public interface TaskRepository extends JpaRepository<Task, UUID> {
     List<Task> findByHouseholdOrderByCreatedAtDesc(Household household);
 
-    List<Task> findByFrequencyNot(Frequency frequency);
+    List<Task> findByFrequencyNotIn(List<Frequency> frequencies);
 
     boolean existsByResponsibleMember(HouseholdMember responsibleMember);
 }

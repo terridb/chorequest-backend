@@ -115,8 +115,20 @@ public class TaskAssignmentService {
         return createAssignment(task, member, calculateTaskDueDate(task));
     }
 
+    public TaskAssignmentResponseDto createInitialAssignment(Task task) {
+        return createAssignment(task, resolveAssignee(task), calculateTaskDueDate(task));
+    }
+
+    public void createNextAssignmentIfRecurring(Task task) {
+        if (!isRecurring(task)) {
+            return;
+        }
+
+        createAssignment(task, resolveAssignee(task), calculateTaskDueDate(task));
+    }
+
     public void generateDueAssignments() {
-        List<Task> tasks = taskRepository.findByFrequencyNot(Frequency.AS_NEEDED);
+        List<Task> tasks = taskRepository.findByFrequencyNotIn(List.of(Frequency.AS_NEEDED, Frequency.ONCE));
 
         for (Task task : tasks) {
             if (taskAssignmentRepository.existsByTaskAndTaskCompletionIsNull(task)) {
@@ -124,12 +136,16 @@ public class TaskAssignmentService {
             }
 
             LocalDate dueDate = calculateTaskDueDate(task);
-            if (dueDate == null || dueDate.isAfter(LocalDate.now())) {
+            if (dueDate.isAfter(LocalDate.now())) {
                 continue;
             }
 
             createAssignment(task, resolveAssignee(task), dueDate);
         }
+    }
+
+    private boolean isRecurring(Task task) {
+        return task.getFrequency() != Frequency.AS_NEEDED && task.getFrequency() != Frequency.ONCE;
     }
 
     private TaskAssignmentResponseDto createAssignment(Task task, HouseholdMember member, LocalDate dueDate) {
@@ -145,14 +161,14 @@ public class TaskAssignmentService {
         if (task.getStrategy() == AssignmentStrategy.SOLO) {
             HouseholdMember member = task.getResponsibleMember();
             if (member == null) {
-                throw new IllegalStateException("Task " + task.getId() + " has SOLO strategy but no responsible member set");
+                throw new BadRequestException("Task " + task.getId() + " has SOLO strategy but no responsible member set");
             }
             return member;
         }
 
         List<HouseholdMember> members = householdMemberRepository.findByHouseholdOrderByCreatedAtAsc(task.getHousehold());
         if (members.isEmpty()) {
-            throw new IllegalStateException("Household " + task.getHousehold().getId() + " has no members to rotate task " + task.getId());
+            throw new BadRequestException("Household " + task.getHousehold().getId() + " has no members to rotate task " + task.getId());
         }
 
         Optional<TaskAssignment> lastAssignment = taskAssignmentRepository.findFirstByTaskOrderByCreatedAtDesc(task);
