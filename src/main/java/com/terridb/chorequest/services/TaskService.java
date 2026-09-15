@@ -1,5 +1,6 @@
 package com.terridb.chorequest.services;
 
+import com.terridb.chorequest.dtos.tasks.EffortPointsDto;
 import com.terridb.chorequest.dtos.tasks.TaskPatchDto;
 import com.terridb.chorequest.dtos.tasks.TaskRequestDto;
 import com.terridb.chorequest.dtos.tasks.TaskResponseDto;
@@ -7,6 +8,7 @@ import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.Task;
 import com.terridb.chorequest.entities.enums.AssignmentStrategy;
+import com.terridb.chorequest.entities.enums.Effort;
 import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.TaskMapper;
@@ -14,8 +16,10 @@ import com.terridb.chorequest.repositories.HouseholdMemberRepository;
 import com.terridb.chorequest.repositories.TaskRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class TaskService {
@@ -33,6 +37,17 @@ public class TaskService {
         this.householdMemberRepository = householdMemberRepository;
         this.taskMapper = taskMapper;
         this.taskAssignmentService = taskAssignmentService;
+    }
+
+    public List<EffortPointsDto> getEfforts() {
+        return Arrays.stream(Effort.values())
+                .map(effort -> {
+                    EffortPointsDto dto = new EffortPointsDto();
+                    dto.setEffort(effort);
+                    dto.setPoints(effort.getPoints());
+                    return dto;
+                })
+                .collect(Collectors.toList());
     }
 
     public List<TaskResponseDto> getTasksForHousehold(UUID householdId, String sub) {

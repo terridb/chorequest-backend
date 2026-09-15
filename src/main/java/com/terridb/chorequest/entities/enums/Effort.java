@@ -1,5 +1,8 @@
 package com.terridb.chorequest.entities.enums;
 
+import lombok.Getter;
+
+@Getter
 public enum Effort {
     NONE(5),
     SMALL(10),
@@ -12,7 +15,4 @@ public enum Effort {
         this.points = points;
     }
 
-    public int getPoints() {
-        return points;
-    }
 }
