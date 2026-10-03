@@ -99,14 +99,14 @@ public class TaskService {
         taskRepository.delete(task);
     }
 
+    // For SOLO tasks the responsible member does every assignment; for ROTATING tasks it is who the rotation starts with
     private void applyResponsibleMember(Task task, AssignmentStrategy strategy, UUID responsibleMemberId) {
-        if (strategy != AssignmentStrategy.SOLO) {
+        if (responsibleMemberId == null) {
+            if (strategy == AssignmentStrategy.SOLO) {
+                throw new BadRequestException("responsibleMemberId is required when strategy is SOLO");
+            }
             task.setResponsibleMember(null);
             return;
-        }
-
-        if (responsibleMemberId == null) {
-            throw new BadRequestException("responsibleMemberId is required when strategy is SOLO");
         }
 
         HouseholdMember member = householdMemberRepository.findById(responsibleMemberId)

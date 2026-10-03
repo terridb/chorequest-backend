@@ -3,7 +3,9 @@ package com.terridb.chorequest.services;
 import com.terridb.chorequest.dtos.householdMembers.HouseholdMemberResponseDto;
 import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdMember;
+import com.terridb.chorequest.entities.Task;
 import com.terridb.chorequest.entities.User;
+import com.terridb.chorequest.entities.enums.AssignmentStrategy;
 import com.terridb.chorequest.entities.enums.HouseholdMemberRole;
 import com.terridb.chorequest.exceptions.AccessDeniedException;
 import com.terridb.chorequest.exceptions.BadRequestException;
@@ -13,6 +15,7 @@ import com.terridb.chorequest.repositories.HouseholdMemberRepository;
 import com.terridb.chorequest.repositories.TaskAssignmentRepository;
 import com.terridb.chorequest.repositories.TaskRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -63,6 +66,7 @@ public class HouseholdMemberService {
         return householdMemberMapper.toDto(householdMemberRepository.save(member));
     }
 
+    @Transactional
     public void deleteMember(UUID id, String sub) {
         HouseholdMember member = getMember(id);
         Household household = member.getHousehold();
@@ -79,7 +83,7 @@ public class HouseholdMemberService {
             throw new BadRequestException("Cannot delete a household member with open task assignments");
         }
 
-        if (taskRepository.existsByResponsibleMember(member)) {
+        if (taskRepository.existsByResponsibleMemberAndStrategy(member, AssignmentStrategy.SOLO)) {
             throw new BadRequestException("Cannot delete a household member who is responsible for a task");
         }
 
@@ -91,6 +95,11 @@ public class HouseholdMemberService {
                         householdMemberRepository.save(successor);
                     });
         }
+
+        // A rotating task only uses its responsible member to pick who goes first, so it can be cleared
+        List<Task> rotatingTasks = taskRepository.findByResponsibleMemberAndStrategy(member, AssignmentStrategy.ROTATING);
+        rotatingTasks.forEach(task -> task.setResponsibleMember(null));
+        taskRepository.saveAll(rotatingTasks);
 
         householdMemberRepository.delete(member);
     }

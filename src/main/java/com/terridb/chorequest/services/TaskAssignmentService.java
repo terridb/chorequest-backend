@@ -173,7 +173,8 @@ public class TaskAssignmentService {
 
         Optional<TaskAssignment> lastAssignment = taskAssignmentRepository.findFirstByTaskOrderByCreatedAtDesc(task);
         if (lastAssignment.isEmpty()) {
-            return members.getFirst();
+            HouseholdMember startingMember = task.getResponsibleMember();
+            return startingMember != null ? startingMember : members.getFirst();
         }
 
         UUID lastMemberId = lastAssignment.get().getHouseholdMember().getId();
