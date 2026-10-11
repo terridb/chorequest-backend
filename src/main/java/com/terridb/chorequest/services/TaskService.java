@@ -116,6 +116,10 @@ public class TaskService {
             throw new BadRequestException("Household member does not belong to this task's household");
         }
 
+        if (!member.isActive()) {
+            throw new BadRequestException("Household member has left the household");
+        }
+
         task.setResponsibleMember(member);
     }
 

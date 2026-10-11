@@ -12,11 +12,11 @@ import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.HouseholdMemberMapper;
 import com.terridb.chorequest.repositories.HouseholdMemberRepository;
-import com.terridb.chorequest.repositories.TaskAssignmentRepository;
 import com.terridb.chorequest.repositories.TaskRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,15 +26,15 @@ public class HouseholdMemberService {
     private final HouseholdMemberMapper householdMemberMapper;
     private final HouseholdService householdService;
     private final UserService userService;
-    private final TaskAssignmentRepository taskAssignmentRepository;
+    private final TaskAssignmentService taskAssignmentService;
     private final TaskRepository taskRepository;
 
-    public HouseholdMemberService(HouseholdMemberRepository householdMemberRepository, HouseholdMemberMapper householdMemberMapper, HouseholdService householdService, UserService userService, TaskAssignmentRepository taskAssignmentRepository, TaskRepository taskRepository) {
+    public HouseholdMemberService(HouseholdMemberRepository householdMemberRepository, HouseholdMemberMapper householdMemberMapper, HouseholdService householdService, UserService userService, TaskAssignmentService taskAssignmentService, TaskRepository taskRepository) {
         this.householdMemberRepository = householdMemberRepository;
         this.householdMemberMapper = householdMemberMapper;
         this.householdService = householdService;
         this.userService = userService;
-        this.taskAssignmentRepository = taskAssignmentRepository;
+        this.taskAssignmentService = taskAssignmentService;
         this.taskRepository = taskRepository;
     }
 
@@ -49,13 +49,13 @@ public class HouseholdMemberService {
         Household household = householdService.getHousehold(householdId);
         householdService.requireMembership(household, sub);
 
-        List<HouseholdMember> members = householdMemberRepository.findByHouseholdOrderByCreatedAtAsc(household);
+        List<HouseholdMember> members = householdMemberRepository.findByHouseholdAndLeftAtIsNullOrderByCreatedAtAsc(household);
 
         return householdMemberMapper.toDto(members);
     }
 
     public HouseholdMemberResponseDto promoteMember(UUID id, String sub) {
-        HouseholdMember member = getMember(id);
+        HouseholdMember member = getActiveMember(id);
         householdService.requireAdmin(member.getHousehold(), sub);
 
         if (member.getRole() == HouseholdMemberRole.ADMIN) {
@@ -68,10 +68,10 @@ public class HouseholdMemberService {
 
     @Transactional
     public void deleteMember(UUID id, String sub) {
-        HouseholdMember member = getMember(id);
+        HouseholdMember member = getActiveMember(id);
         Household household = member.getHousehold();
         User caller = userService.getUserBySub(sub);
-        HouseholdMember callerMembership = householdMemberRepository.findByHouseholdAndUser(household, caller)
+        HouseholdMember callerMembership = householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, caller)
                 .orElseThrow(() -> new AccessDeniedException("Not a member of this household"));
 
         boolean isSelf = callerMembership.getId().equals(member.getId());
@@ -79,33 +79,38 @@ public class HouseholdMemberService {
             throw new AccessDeniedException("Only a household admin can remove another member");
         }
 
-        if (taskAssignmentRepository.existsByHouseholdMemberAndTaskCompletionIsNull(member)) {
-            throw new BadRequestException("Cannot delete a household member with open task assignments");
-        }
-
-        if (taskRepository.existsByResponsibleMemberAndStrategy(member, AssignmentStrategy.SOLO)) {
-            throw new BadRequestException("Cannot delete a household member who is responsible for a task");
-        }
-
         if (member.getRole() == HouseholdMemberRole.ADMIN
-                && !householdMemberRepository.existsByHouseholdAndRoleAndIdNot(household, HouseholdMemberRole.ADMIN, member.getId())) {
-            householdMemberRepository.findFirstByHouseholdAndIdNotOrderByCreatedAtAsc(household, member.getId())
+                && !householdMemberRepository.existsByHouseholdAndRoleAndIdNotAndLeftAtIsNull(household, HouseholdMemberRole.ADMIN, member.getId())) {
+            householdMemberRepository.findFirstByHouseholdAndIdNotAndLeftAtIsNullOrderByCreatedAtAsc(household, member.getId())
                     .ifPresent(successor -> {
                         successor.setRole(HouseholdMemberRole.ADMIN);
                         householdMemberRepository.save(successor);
                     });
         }
 
-        // A rotating task only uses its responsible member to pick who goes first, so it can be cleared
-        List<Task> rotatingTasks = taskRepository.findByResponsibleMemberAndStrategy(member, AssignmentStrategy.ROTATING);
-        rotatingTasks.forEach(task -> task.setResponsibleMember(null));
-        taskRepository.saveAll(rotatingTasks);
+        List<Task> ownedTasks = taskRepository.findByResponsibleMember(member);
+        ownedTasks.forEach(task -> {
+            task.setStrategy(AssignmentStrategy.ROTATING);
+            task.setResponsibleMember(null);
+        });
+        taskRepository.saveAll(ownedTasks);
 
-        householdMemberRepository.delete(member);
+        taskAssignmentService.reassignOpenAssignments(member);
+
+        member.setLeftAt(LocalDateTime.now());
+        householdMemberRepository.save(member);
     }
 
     public HouseholdMember getMember(UUID id) {
         return householdMemberRepository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Household member with id " + id + " not found"));
+    }
+
+    private HouseholdMember getActiveMember(UUID id) {
+        HouseholdMember member = getMember(id);
+        if (!member.isActive()) {
+            throw new RecordNotFoundException("Household member with id " + id + " not found");
+        }
+        return member;
     }
 }

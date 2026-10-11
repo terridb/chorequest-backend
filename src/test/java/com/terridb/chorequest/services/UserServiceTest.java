@@ -9,6 +9,7 @@ import com.terridb.chorequest.exceptions.AccessDeniedException;
 import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.UserMapper;
+import com.terridb.chorequest.repositories.HouseholdMemberRepository;
 import com.terridb.chorequest.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -37,11 +40,14 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private HouseholdMemberRepository householdMemberRepository;
+
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, new UserMapper());
+        userService = new UserService(userRepository, new UserMapper(), householdMemberRepository);
     }
 
     @Test
@@ -115,7 +121,7 @@ class UserServiceTest {
     }
 
     @Test
-    void deleteUser_throwsBadRequest_whenUserStillHasMemberships() {
+    void deleteUser_throwsBadRequest_whenUserStillHasActiveMemberships() {
         UUID id = UUID.randomUUID();
         User user = userWithSub(OWNER_SUB);
         user.setMemberships(Set.of(new HouseholdMember()));
@@ -134,6 +140,23 @@ class UserServiceTest {
 
         userService.deleteUser(id, OWNER_SUB);
 
+        verify(userRepository).delete(user);
+    }
+
+    @Test
+    void deleteUser_keepsPastMembershipsWithoutUser_whenUserLeftTheirHouseholds() {
+        UUID id = UUID.randomUUID();
+        User user = userWithSub(OWNER_SUB);
+        HouseholdMember pastMembership = new HouseholdMember();
+        pastMembership.setUser(user);
+        pastMembership.setLeftAt(LocalDateTime.now());
+        user.setMemberships(Set.of(pastMembership));
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+
+        userService.deleteUser(id, OWNER_SUB);
+
+        assertThat(pastMembership.getUser()).isNull();
+        verify(householdMemberRepository).saveAll(List.of(pastMembership));
         verify(userRepository).delete(user);
     }
 

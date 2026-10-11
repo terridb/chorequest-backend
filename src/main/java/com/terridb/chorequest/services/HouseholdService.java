@@ -44,6 +44,7 @@ public class HouseholdService {
         requireSelf(user, sub);
 
         List<Household> households = user.getMemberships().stream()
+                .filter(HouseholdMember::isActive)
                 .map(HouseholdMember::getHousehold)
                 .collect(Collectors.toList());
 
@@ -87,14 +88,14 @@ public class HouseholdService {
 
     public void requireMembership(Household household, String sub) {
         User user = userService.getUserBySub(sub);
-        if (!householdMemberRepository.existsByHouseholdAndUser(household, user)) {
+        if (!householdMemberRepository.existsByHouseholdAndUserAndLeftAtIsNull(household, user)) {
             throw new AccessDeniedException("Not a member of this household");
         }
     }
 
     public void requireAdmin(Household household, String sub) {
         User user = userService.getUserBySub(sub);
-        HouseholdMember membership = householdMemberRepository.findByHouseholdAndUser(household, user)
+        HouseholdMember membership = householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, user)
                 .orElseThrow(() -> new AccessDeniedException("Not a member of this household"));
 
         if (membership.getRole() != HouseholdMemberRole.ADMIN) {

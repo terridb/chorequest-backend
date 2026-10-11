@@ -141,7 +141,7 @@ class HouseholdInviteServiceTest {
         User user = userWithSub("auth0|joiner");
         when(householdInviteRepository.findByCode(validInvite.getCode())).thenReturn(Optional.of(validInvite));
         when(userService.getUserBySub("auth0|joiner")).thenReturn(user);
-        when(householdMemberRepository.existsByHouseholdAndUser(household, user)).thenReturn(false);
+        when(householdMemberRepository.existsByHouseholdAndUserAndLeftAtIsNull(household, user)).thenReturn(false);
         when(householdMemberRepository.save(any(HouseholdMember.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         HouseholdMemberResponseDto dto = householdInviteService.acceptInvite(validInvite.getCode(), "auth0|joiner");
@@ -184,7 +184,7 @@ class HouseholdInviteServiceTest {
         User user = userWithSub(SUB);
         when(householdInviteRepository.findByCode(validInvite.getCode())).thenReturn(Optional.of(validInvite));
         when(userService.getUserBySub(SUB)).thenReturn(user);
-        when(householdMemberRepository.existsByHouseholdAndUser(household, user)).thenReturn(true);
+        when(householdMemberRepository.existsByHouseholdAndUserAndLeftAtIsNull(household, user)).thenReturn(true);
 
         assertThatThrownBy(() -> householdInviteService.acceptInvite(validInvite.getCode(), SUB))
                 .isInstanceOf(BadRequestException.class);

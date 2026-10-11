@@ -88,6 +88,10 @@ public class TaskAssignmentService {
             throw new BadRequestException("Household member does not belong to this task's household");
         }
 
+        if (!member.isActive()) {
+            throw new BadRequestException("Household member has left the household");
+        }
+
         assignment.setHouseholdMember(member);
         return taskAssignmentMapper.toDto(taskAssignmentRepository.save(assignment));
     }
@@ -110,6 +114,10 @@ public class TaskAssignmentService {
 
         if (!member.getHousehold().getId().equals(task.getHousehold().getId())) {
             throw new BadRequestException("Household member does not belong to this task's household");
+        }
+
+        if (!member.isActive()) {
+            throw new BadRequestException("Household member has left the household");
         }
 
         return createAssignment(task, member, calculateTaskDueDate(task));
@@ -144,6 +152,25 @@ public class TaskAssignmentService {
         }
     }
 
+    public void reassignOpenAssignments(HouseholdMember leavingMember) {
+        List<HouseholdMember> members = householdMemberRepository.findByHouseholdAndLeftAtIsNullOrderByCreatedAtAsc(leavingMember.getHousehold());
+        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByHouseholdMemberAndTaskCompletionIsNull(leavingMember);
+
+        if (members.size() <= 1) {
+            taskAssignmentRepository.deleteAll(openAssignments);
+            return;
+        }
+
+        HouseholdMember nextMember = memberAfter(members, leavingMember.getId());
+        for (TaskAssignment assignment : openAssignments) {
+            HouseholdMember owner = assignment.getTask().getResponsibleMember();
+            boolean hasOtherSoloOwner = assignment.getTask().getStrategy() == AssignmentStrategy.SOLO
+                    && owner != null && !owner.getId().equals(leavingMember.getId());
+            assignment.setHouseholdMember(hasOtherSoloOwner ? owner : nextMember);
+        }
+        taskAssignmentRepository.saveAll(openAssignments);
+    }
+
     private boolean isRecurring(Task task) {
         return task.getFrequency() != Frequency.AS_NEEDED && task.getFrequency() != Frequency.ONCE;
     }
@@ -166,7 +193,7 @@ public class TaskAssignmentService {
             return member;
         }
 
-        List<HouseholdMember> members = householdMemberRepository.findByHouseholdOrderByCreatedAtAsc(task.getHousehold());
+        List<HouseholdMember> members = householdMemberRepository.findByHouseholdAndLeftAtIsNullOrderByCreatedAtAsc(task.getHousehold());
         if (members.isEmpty()) {
             throw new BadRequestException("Household " + task.getHousehold().getId() + " has no members to rotate task " + task.getId());
         }
@@ -177,16 +204,19 @@ public class TaskAssignmentService {
             return startingMember != null ? startingMember : members.getFirst();
         }
 
-        UUID lastMemberId = lastAssignment.get().getHouseholdMember().getId();
-        int lastIndex = -1;
+        return memberAfter(members, lastAssignment.get().getHouseholdMember().getId());
+    }
+
+    private HouseholdMember memberAfter(List<HouseholdMember> members, UUID memberId) {
+        int index = -1;
         for (int i = 0; i < members.size(); i++) {
-            if (members.get(i).getId().equals(lastMemberId)) {
-                lastIndex = i;
+            if (members.get(i).getId().equals(memberId)) {
+                index = i;
                 break;
             }
         }
 
-        return members.get((lastIndex + 1) % members.size());
+        return members.get((index + 1) % members.size());
     }
 
     private LocalDate calculateTaskDueDate(Task task) {

@@ -4,23 +4,28 @@ import com.terridb.chorequest.dtos.householdMembers.HouseholdMemberResponseDto;
 import com.terridb.chorequest.entities.BaseEntity;
 import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdMember;
+import com.terridb.chorequest.entities.Task;
 import com.terridb.chorequest.entities.User;
+import com.terridb.chorequest.entities.enums.AssignmentStrategy;
 import com.terridb.chorequest.entities.enums.HouseholdMemberRole;
 import com.terridb.chorequest.exceptions.AccessDeniedException;
 import com.terridb.chorequest.exceptions.BadRequestException;
+import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.HouseholdMemberMapper;
 import com.terridb.chorequest.mappers.UserMapper;
 import com.terridb.chorequest.repositories.HouseholdMemberRepository;
-import com.terridb.chorequest.repositories.TaskAssignmentRepository;
 import com.terridb.chorequest.repositories.TaskRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -28,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,7 +53,7 @@ class HouseholdMemberServiceTest {
     private UserService userService;
 
     @Mock
-    private TaskAssignmentRepository taskAssignmentRepository;
+    private TaskAssignmentService taskAssignmentService;
 
     @Mock
     private TaskRepository taskRepository;
@@ -57,7 +63,7 @@ class HouseholdMemberServiceTest {
     @BeforeEach
     void setUp() {
         HouseholdMemberMapper householdMemberMapper = new HouseholdMemberMapper(new UserMapper());
-        householdMemberService = new HouseholdMemberService(householdMemberRepository, householdMemberMapper, householdService, userService, taskAssignmentRepository, taskRepository);
+        householdMemberService = new HouseholdMemberService(householdMemberRepository, householdMemberMapper, householdService, userService, taskAssignmentService, taskRepository);
     }
 
     @Test
@@ -69,12 +75,14 @@ class HouseholdMemberServiceTest {
 
         when(householdMemberRepository.findById(member.getId())).thenReturn(Optional.of(member));
         when(userService.getUserBySub(SUB)).thenReturn(caller);
-        when(householdMemberRepository.findByHouseholdAndUser(household, caller)).thenReturn(Optional.of(member));
+        when(householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, caller)).thenReturn(Optional.of(member));
 
         householdMemberService.deleteMember(member.getId(), SUB);
 
-        verify(householdMemberRepository).delete(member);
-        verify(householdMemberRepository, never()).save(any());
+        assertThat(member.getLeftAt()).isNotNull();
+        verify(householdMemberRepository).save(member);
+        verify(taskAssignmentService).reassignOpenAssignments(member);
+        verify(householdMemberRepository, never()).delete(any());
     }
 
     @Test
@@ -86,13 +94,14 @@ class HouseholdMemberServiceTest {
 
         when(householdMemberRepository.findById(member.getId())).thenReturn(Optional.of(member));
         when(userService.getUserBySub(SUB)).thenReturn(caller);
-        when(householdMemberRepository.findByHouseholdAndUser(household, caller)).thenReturn(Optional.of(member));
-        when(householdMemberRepository.existsByHouseholdAndRoleAndIdNot(household, HouseholdMemberRole.ADMIN, member.getId())).thenReturn(true);
+        when(householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, caller)).thenReturn(Optional.of(member));
+        when(householdMemberRepository.existsByHouseholdAndRoleAndIdNotAndLeftAtIsNull(household, HouseholdMemberRole.ADMIN, member.getId())).thenReturn(true);
 
         householdMemberService.deleteMember(member.getId(), SUB);
 
-        verify(householdMemberRepository).delete(member);
-        verify(householdMemberRepository, never()).save(any());
+        assertThat(member.getLeftAt()).isNotNull();
+        verify(householdMemberRepository).save(member);
+        verify(householdMemberRepository, never()).findFirstByHouseholdAndIdNotAndLeftAtIsNullOrderByCreatedAtAsc(any(), any());
     }
 
     @Test
@@ -105,21 +114,20 @@ class HouseholdMemberServiceTest {
 
         when(householdMemberRepository.findById(member.getId())).thenReturn(Optional.of(member));
         when(userService.getUserBySub(SUB)).thenReturn(caller);
-        when(householdMemberRepository.findByHouseholdAndUser(household, caller)).thenReturn(Optional.of(member));
-        when(householdMemberRepository.existsByHouseholdAndRoleAndIdNot(household, HouseholdMemberRole.ADMIN, member.getId())).thenReturn(false);
-        when(householdMemberRepository.findFirstByHouseholdAndIdNotOrderByCreatedAtAsc(household, member.getId())).thenReturn(Optional.of(successor));
+        when(householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, caller)).thenReturn(Optional.of(member));
+        when(householdMemberRepository.existsByHouseholdAndRoleAndIdNotAndLeftAtIsNull(household, HouseholdMemberRole.ADMIN, member.getId())).thenReturn(false);
+        when(householdMemberRepository.findFirstByHouseholdAndIdNotAndLeftAtIsNullOrderByCreatedAtAsc(household, member.getId())).thenReturn(Optional.of(successor));
 
         householdMemberService.deleteMember(member.getId(), SUB);
 
-        ArgumentCaptor<HouseholdMember> savedCaptor = ArgumentCaptor.forClass(HouseholdMember.class);
-        verify(householdMemberRepository).save(savedCaptor.capture());
-        assertThat(savedCaptor.getValue()).isEqualTo(successor);
-        assertThat(savedCaptor.getValue().getRole()).isEqualTo(HouseholdMemberRole.ADMIN);
-        verify(householdMemberRepository).delete(member);
+        assertThat(successor.getRole()).isEqualTo(HouseholdMemberRole.ADMIN);
+        verify(householdMemberRepository).save(successor);
+        assertThat(member.getLeftAt()).isNotNull();
+        verify(householdMemberRepository).save(member);
     }
 
     @Test
-    void deleteMember_lastAdminSelfLeave_withNoOtherMembers_deletesWithoutPromoting() {
+    void deleteMember_lastAdminSelfLeave_withNoOtherMembers_leavesWithoutPromoting() {
         Household household = new Household();
         HouseholdMember member = memberWithRole(household, HouseholdMemberRole.ADMIN);
         User caller = userWithSub(SUB);
@@ -127,14 +135,16 @@ class HouseholdMemberServiceTest {
 
         when(householdMemberRepository.findById(member.getId())).thenReturn(Optional.of(member));
         when(userService.getUserBySub(SUB)).thenReturn(caller);
-        when(householdMemberRepository.findByHouseholdAndUser(household, caller)).thenReturn(Optional.of(member));
-        when(householdMemberRepository.existsByHouseholdAndRoleAndIdNot(household, HouseholdMemberRole.ADMIN, member.getId())).thenReturn(false);
-        when(householdMemberRepository.findFirstByHouseholdAndIdNotOrderByCreatedAtAsc(household, member.getId())).thenReturn(Optional.empty());
+        when(householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, caller)).thenReturn(Optional.of(member));
+        when(householdMemberRepository.existsByHouseholdAndRoleAndIdNotAndLeftAtIsNull(household, HouseholdMemberRole.ADMIN, member.getId())).thenReturn(false);
+        when(householdMemberRepository.findFirstByHouseholdAndIdNotAndLeftAtIsNullOrderByCreatedAtAsc(household, member.getId())).thenReturn(Optional.empty());
 
         householdMemberService.deleteMember(member.getId(), SUB);
 
-        verify(householdMemberRepository, never()).save(any());
-        verify(householdMemberRepository).delete(member);
+        ArgumentCaptor<HouseholdMember> savedCaptor = ArgumentCaptor.forClass(HouseholdMember.class);
+        verify(householdMemberRepository).save(savedCaptor.capture());
+        assertThat(savedCaptor.getValue()).isEqualTo(member);
+        assertThat(member.getLeftAt()).isNotNull();
     }
 
     @Test
@@ -147,11 +157,13 @@ class HouseholdMemberServiceTest {
 
         when(householdMemberRepository.findById(other.getId())).thenReturn(Optional.of(other));
         when(userService.getUserBySub(SUB)).thenReturn(caller);
-        when(householdMemberRepository.findByHouseholdAndUser(household, caller)).thenReturn(Optional.of(callerMembership));
+        when(householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, caller)).thenReturn(Optional.of(callerMembership));
 
         assertThatThrownBy(() -> householdMemberService.deleteMember(other.getId(), SUB))
                 .isInstanceOf(AccessDeniedException.class);
-        verify(householdMemberRepository, never()).delete(any());
+        assertThat(other.getLeftAt()).isNull();
+        verify(householdMemberRepository, never()).save(any());
+        verify(taskAssignmentService, never()).reassignOpenAssignments(any());
     }
 
     @Test
@@ -164,11 +176,13 @@ class HouseholdMemberServiceTest {
 
         when(householdMemberRepository.findById(other.getId())).thenReturn(Optional.of(other));
         when(userService.getUserBySub(SUB)).thenReturn(caller);
-        when(householdMemberRepository.findByHouseholdAndUser(household, caller)).thenReturn(Optional.of(callerMembership));
+        when(householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, caller)).thenReturn(Optional.of(callerMembership));
 
         householdMemberService.deleteMember(other.getId(), SUB);
 
-        verify(householdMemberRepository).delete(other);
+        assertThat(other.getLeftAt()).isNotNull();
+        verify(householdMemberRepository).save(other);
+        verify(taskAssignmentService).reassignOpenAssignments(other);
     }
 
     @Test
@@ -179,28 +193,53 @@ class HouseholdMemberServiceTest {
 
         when(householdMemberRepository.findById(member.getId())).thenReturn(Optional.of(member));
         when(userService.getUserBySub(SUB)).thenReturn(caller);
-        when(householdMemberRepository.findByHouseholdAndUser(household, caller)).thenReturn(Optional.empty());
+        when(householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, caller)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> householdMemberService.deleteMember(member.getId(), SUB))
                 .isInstanceOf(AccessDeniedException.class);
-        verify(householdMemberRepository, never()).delete(any());
+        verify(householdMemberRepository, never()).save(any());
     }
 
     @Test
-    void deleteMember_throwsBadRequest_whenOpenTaskAssignmentsExist() {
+    void deleteMember_convertsOwnedTasksToRotating_beforeReassigningOpenAssignments() {
         Household household = new Household();
         HouseholdMember member = memberWithRole(household, HouseholdMemberRole.MEMBER);
         User caller = userWithSub(SUB);
         member.setUser(caller);
+        Task soloTask = new Task();
+        soloTask.setStrategy(AssignmentStrategy.SOLO);
+        soloTask.setResponsibleMember(member);
+        Task rotatingTask = new Task();
+        rotatingTask.setStrategy(AssignmentStrategy.ROTATING);
+        rotatingTask.setResponsibleMember(member);
 
         when(householdMemberRepository.findById(member.getId())).thenReturn(Optional.of(member));
         when(userService.getUserBySub(SUB)).thenReturn(caller);
-        when(householdMemberRepository.findByHouseholdAndUser(household, caller)).thenReturn(Optional.of(member));
-        when(taskAssignmentRepository.existsByHouseholdMemberAndTaskCompletionIsNull(member)).thenReturn(true);
+        when(householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, caller)).thenReturn(Optional.of(member));
+        when(taskRepository.findByResponsibleMember(member)).thenReturn(List.of(soloTask, rotatingTask));
+
+        householdMemberService.deleteMember(member.getId(), SUB);
+
+        assertThat(soloTask.getStrategy()).isEqualTo(AssignmentStrategy.ROTATING);
+        assertThat(soloTask.getResponsibleMember()).isNull();
+        assertThat(rotatingTask.getStrategy()).isEqualTo(AssignmentStrategy.ROTATING);
+        assertThat(rotatingTask.getResponsibleMember()).isNull();
+        InOrder inOrder = inOrder(taskRepository, taskAssignmentService);
+        inOrder.verify(taskRepository).saveAll(List.of(soloTask, rotatingTask));
+        inOrder.verify(taskAssignmentService).reassignOpenAssignments(member);
+    }
+
+    @Test
+    void deleteMember_throwsNotFound_whenMemberAlreadyLeft() {
+        Household household = new Household();
+        HouseholdMember member = memberWithRole(household, HouseholdMemberRole.MEMBER);
+        member.setLeftAt(LocalDateTime.now());
+
+        when(householdMemberRepository.findById(member.getId())).thenReturn(Optional.of(member));
 
         assertThatThrownBy(() -> householdMemberService.deleteMember(member.getId(), SUB))
-                .isInstanceOf(BadRequestException.class);
-        verify(householdMemberRepository, never()).delete(any());
+                .isInstanceOf(RecordNotFoundException.class);
+        verify(householdMemberRepository, never()).save(any());
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.terridb.chorequest.mappers;
 import com.terridb.chorequest.dtos.users.UserPatchDto;
 import com.terridb.chorequest.dtos.users.UserResponseDto;
 import com.terridb.chorequest.dtos.users.UserResponseSimpleDto;
+import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.User;
 import org.springframework.stereotype.Component;
 
@@ -33,6 +34,7 @@ public class UserMapper {
         responseDto.setLastName(user.getLastName());
         responseDto.setAvatarUrl(user.getAvatarUrl());
         responseDto.setHouseholdIds(user.getMemberships().stream()
+                .filter(HouseholdMember::isActive)
                 .map(householdMember -> householdMember.getHousehold().getId())
                 .collect(Collectors.toList()));
 
@@ -46,6 +48,10 @@ public class UserMapper {
     }
 
     public UserResponseSimpleDto toSimpleDto(User user) {
+        if (user == null) {
+            return null;
+        }
+
         UserResponseSimpleDto responseDto = new UserResponseSimpleDto();
 
         responseDto.setId(user.getId());

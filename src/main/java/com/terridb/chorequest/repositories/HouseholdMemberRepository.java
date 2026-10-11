@@ -11,13 +11,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface HouseholdMemberRepository extends JpaRepository<HouseholdMember, UUID> {
-    List<HouseholdMember> findByHouseholdOrderByCreatedAtAsc(Household household);
+    List<HouseholdMember> findByHouseholdAndLeftAtIsNullOrderByCreatedAtAsc(Household household);
 
-    boolean existsByHouseholdAndUser(Household household, User user);
+    boolean existsByHouseholdAndUserAndLeftAtIsNull(Household household, User user);
 
-    Optional<HouseholdMember> findByHouseholdAndUser(Household household, User user);
+    Optional<HouseholdMember> findByHouseholdAndUserAndLeftAtIsNull(Household household, User user);
 
-    boolean existsByHouseholdAndRoleAndIdNot(Household household, HouseholdMemberRole role, UUID id);
+    boolean existsByHouseholdAndRoleAndIdNotAndLeftAtIsNull(Household household, HouseholdMemberRole role, UUID id);
 
-    Optional<HouseholdMember> findFirstByHouseholdAndIdNotOrderByCreatedAtAsc(Household household, UUID id);
+    Optional<HouseholdMember> findFirstByHouseholdAndIdNotAndLeftAtIsNullOrderByCreatedAtAsc(Household household, UUID id);
 }

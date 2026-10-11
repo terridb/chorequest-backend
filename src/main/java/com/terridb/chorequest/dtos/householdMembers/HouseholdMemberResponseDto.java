@@ -5,6 +5,7 @@ import com.terridb.chorequest.entities.enums.HouseholdMemberRole;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -14,4 +15,5 @@ public class HouseholdMemberResponseDto {
     private UserResponseSimpleDto user;
     private int points;
     private HouseholdMemberRole role;
+    private LocalDateTime leftAt;
 }

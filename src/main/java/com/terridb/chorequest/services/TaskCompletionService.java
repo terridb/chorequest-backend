@@ -55,6 +55,10 @@ public class TaskCompletionService {
             throw new BadRequestException("Household member does not belong to this task's household");
         }
 
+        if (!member.isActive()) {
+            throw new BadRequestException("Household member has left the household");
+        }
+
         TaskCompletion completion = new TaskCompletion();
         completion.setRewardedPoints(assignment.getTask().getDefaultPoints());
         completion.setTaskAssignment(assignment);

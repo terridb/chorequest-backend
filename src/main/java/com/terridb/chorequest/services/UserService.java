@@ -3,24 +3,30 @@ package com.terridb.chorequest.services;
 import com.terridb.chorequest.dtos.users.MeRequestDto;
 import com.terridb.chorequest.dtos.users.UserPatchDto;
 import com.terridb.chorequest.dtos.users.UserResponseDto;
+import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.User;
 import com.terridb.chorequest.exceptions.AccessDeniedException;
 import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.UserMapper;
+import com.terridb.chorequest.repositories.HouseholdMemberRepository;
 import com.terridb.chorequest.repositories.UserRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final HouseholdMemberRepository householdMemberRepository;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper) {
+    public UserService(UserRepository userRepository, UserMapper userMapper, HouseholdMemberRepository householdMemberRepository) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
+        this.householdMemberRepository = householdMemberRepository;
     }
 
     public UserResponseDto getUserById(UUID id, String sub) {
@@ -38,13 +44,18 @@ public class UserService {
         return userMapper.toDto(userRepository.save(patchedUser));
     }
 
+    @Transactional
     public void deleteUser(UUID id, String sub) {
         User user = getUser(id);
         requireSelf(user, sub);
 
-        if (!user.getMemberships().isEmpty()) {
+        if (user.getMemberships().stream().anyMatch(HouseholdMember::isActive)) {
             throw new BadRequestException("Cannot delete a user who is still a member of a household");
         }
+
+        List<HouseholdMember> pastMemberships = List.copyOf(user.getMemberships());
+        pastMemberships.forEach(membership -> membership.setUser(null));
+        householdMemberRepository.saveAll(pastMemberships);
 
         userRepository.delete(user);
     }

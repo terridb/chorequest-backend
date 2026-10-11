@@ -22,6 +22,7 @@ public class HouseholdMemberMapper {
         responseDto.setUser(userMapper.toSimpleDto(householdMember.getUser()));
         responseDto.setPoints(householdMember.getPoints());
         responseDto.setRole(householdMember.getRole());
+        responseDto.setLeftAt(householdMember.getLeftAt());
 
         return responseDto;
     }

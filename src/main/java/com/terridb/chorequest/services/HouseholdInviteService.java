@@ -95,7 +95,7 @@ public class HouseholdInviteService {
         Household household = invite.getHousehold();
         User user = userService.getUserBySub(sub);
 
-        if (householdMemberRepository.existsByHouseholdAndUser(household, user)) {
+        if (householdMemberRepository.existsByHouseholdAndUserAndLeftAtIsNull(household, user)) {
             throw new BadRequestException("Already a member of this household");
         }
 
