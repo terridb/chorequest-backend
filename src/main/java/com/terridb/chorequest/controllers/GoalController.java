@@ -36,7 +36,9 @@ public class GoalController {
 
     @GetMapping("/households/{householdId}/goals/current")
     public ResponseEntity<GoalResponseDto> getCurrentGoalForHousehold(@PathVariable UUID householdId, @AuthenticationPrincipal Jwt jwt) {
-        return ResponseEntity.ok(goalService.getCurrentGoalForHousehold(householdId, jwt.getSubject()));
+        return goalService.getCurrentGoalForHousehold(householdId, jwt.getSubject())
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @PostMapping("/households/{householdId}/goals")

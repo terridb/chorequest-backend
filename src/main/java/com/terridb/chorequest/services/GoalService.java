@@ -45,14 +45,11 @@ public class GoalService {
         return goalMapper.toDto(goals);
     }
 
-    public GoalResponseDto getCurrentGoalForHousehold(UUID id, String sub) {
+    public Optional<GoalResponseDto> getCurrentGoalForHousehold(UUID id, String sub) {
         Household household = householdService.getHousehold(id);
         householdService.requireMembership(household, sub);
 
-        Goal goal = getActiveGoalForHousehold(household)
-                .orElseThrow(() -> new RecordNotFoundException("Household with id " + id + " has no active goal"));
-
-        return goalMapper.toDto(goal);
+        return getActiveGoalForHousehold(household).map(goalMapper::toDto);
     }
 
     public GoalResponseDto updateGoal(UUID id, GoalPatchDto input, String sub) {
