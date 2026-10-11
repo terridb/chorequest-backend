@@ -7,6 +7,8 @@ import com.terridb.chorequest.services.TaskCompletionService;
 import com.terridb.chorequest.utils.UrlUtil;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -23,18 +25,18 @@ public class TaskCompletionController {
     }
 
     @GetMapping("/completions/{id}")
-    public ResponseEntity<TaskCompletionResponseDto> getCompletionById(@PathVariable UUID id) {
-        return ResponseEntity.ok(taskCompletionService.getCompletionById(id));
+    public ResponseEntity<TaskCompletionResponseDto> getCompletionById(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(taskCompletionService.getCompletionById(id, jwt.getSubject()));
     }
 
     @GetMapping("/members/{id}/completions")
-    public ResponseEntity<List<TaskCompletionResponseDto>> getCompletionsByMember(@PathVariable UUID id) {
-        return ResponseEntity.ok(taskCompletionService.getCompletionsByMember(id));
+    public ResponseEntity<List<TaskCompletionResponseDto>> getCompletionsByMember(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(taskCompletionService.getCompletionsByMember(id, jwt.getSubject()));
     }
 
     @PostMapping("/assignments/{id}/completions")
-    public ResponseEntity<TaskCompletionResponseDto> markAssignmentAsDone(@PathVariable UUID id, @Valid @RequestBody TaskCompletionRequestDto input) {
-        TaskCompletionResponseDto dto = taskCompletionService.markAssignmentAsDone(id, input);
+    public ResponseEntity<TaskCompletionResponseDto> markAssignmentAsDone(@PathVariable UUID id, @Valid @RequestBody TaskCompletionRequestDto input, @AuthenticationPrincipal Jwt jwt) {
+        TaskCompletionResponseDto dto = taskCompletionService.markAssignmentAsDone(id, input, jwt.getSubject());
 
         URI location = UrlUtil.buildCreatedUri("/api/completions/{id}", dto.getId());
 
@@ -42,8 +44,8 @@ public class TaskCompletionController {
     }
 
     @GetMapping("goals/{id}/completions")
-    public ResponseEntity<List<TaskCompletionSimpleResponseDto>> getCompletionsForGoal(@PathVariable UUID id) {
-        return ResponseEntity.ok(taskCompletionService.getCompletionsForGoal(id));
+    public ResponseEntity<List<TaskCompletionSimpleResponseDto>> getCompletionsForGoal(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(taskCompletionService.getCompletionsForGoal(id, jwt.getSubject()));
     }
 }
 

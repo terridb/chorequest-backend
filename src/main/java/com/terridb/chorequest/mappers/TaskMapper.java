@@ -4,7 +4,6 @@ import com.terridb.chorequest.dtos.tasks.TaskPatchDto;
 import com.terridb.chorequest.dtos.tasks.TaskRequestDto;
 import com.terridb.chorequest.dtos.tasks.TaskResponseDto;
 import com.terridb.chorequest.entities.Task;
-import com.terridb.chorequest.entities.enums.Effort;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -23,7 +22,7 @@ public class TaskMapper {
         task.setFrequency(requestDto.getFrequency());
         task.setStartingDate(requestDto.getStartingDate());
         task.setAlwaysSameDay(requestDto.isAlwaysSameDay());
-        task.setDefaultPoints(pointsForEffort(requestDto.getEffort()));
+        task.setDefaultPoints(requestDto.getEffort().getPoints());
         task.setStrategy(requestDto.getStrategy());
 
         return task;
@@ -38,7 +37,7 @@ public class TaskMapper {
         }
         if (patchDto.getEffort() != null) {
             task.setEffort(patchDto.getEffort());
-            task.setDefaultPoints(pointsForEffort(patchDto.getEffort()));
+            task.setDefaultPoints(patchDto.getEffort().getPoints());
         }
         if (patchDto.getFrequency() != null) {
             task.setFrequency(patchDto.getFrequency());
@@ -78,14 +77,5 @@ public class TaskMapper {
         return tasks.stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
-    }
-
-    private int pointsForEffort(Effort effort) {
-        return switch (effort) {
-            case NONE -> 5;
-            case SMALL -> 10;
-            case MEDIUM -> 15;
-            case BIG -> 30;
-        };
     }
 }

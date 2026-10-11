@@ -7,6 +7,8 @@ import com.terridb.chorequest.services.GoalService;
 import com.terridb.chorequest.utils.UrlUtil;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -23,31 +25,34 @@ public class GoalController {
     }
 
     @GetMapping("/goals/{id}")
-    public ResponseEntity<GoalResponseDto> getGoalById(@PathVariable UUID id) {
-        return ResponseEntity.ok(goalService.getGoalById(id));
+    public ResponseEntity<GoalResponseDto> getGoalById(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(goalService.getGoalById(id, jwt.getSubject()));
     }
 
     @GetMapping("/households/{householdId}/goals")
-    public ResponseEntity<List<GoalResponseDto>> getGoalsForHousehold(@PathVariable UUID householdId) {
-        return ResponseEntity.ok(goalService.getGoalsForHousehold(householdId));
+    public ResponseEntity<List<GoalResponseDto>> getGoalsForHousehold(@PathVariable UUID householdId, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(goalService.getGoalsForHousehold(householdId, jwt.getSubject()));
     }
 
     @GetMapping("/households/{householdId}/goals/current")
-    public ResponseEntity<GoalResponseDto> getCurrentGoalForHousehold(@PathVariable UUID householdId) {
-        return ResponseEntity.ok(goalService.getCurrentGoalForHousehold(householdId));
+    public ResponseEntity<GoalResponseDto> getCurrentGoalForHousehold(@PathVariable UUID householdId, @AuthenticationPrincipal Jwt jwt) {
+        return goalService.getCurrentGoalForHousehold(householdId, jwt.getSubject())
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @PostMapping("/households/{householdId}/goals")
     public ResponseEntity<GoalResponseDto> postGoal(@PathVariable UUID householdId,
-                                                     @Valid @RequestBody GoalRequestDto input) {
-        GoalResponseDto dto = goalService.postGoal(householdId, input);
+                                                     @Valid @RequestBody GoalRequestDto input,
+                                                     @AuthenticationPrincipal Jwt jwt) {
+        GoalResponseDto dto = goalService.postGoal(householdId, input, jwt.getSubject());
         URI location = UrlUtil.buildCreatedUri("/api/goals/{id}", dto.getId());
 
         return ResponseEntity.created(location).body(dto);
     }
 
     @PatchMapping("/goals/{id}")
-    public ResponseEntity<GoalResponseDto> updateGoal(@PathVariable UUID id, @Valid @RequestBody GoalPatchDto input) {
-        return ResponseEntity.ok(goalService.updateGoal(id, input));
+    public ResponseEntity<GoalResponseDto> updateGoal(@PathVariable UUID id, @Valid @RequestBody GoalPatchDto input, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(goalService.updateGoal(id, input, jwt.getSubject()));
     }
 }

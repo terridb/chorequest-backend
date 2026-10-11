@@ -1,6 +1,9 @@
 package com.terridb.chorequest.entities;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -15,6 +18,9 @@ import java.util.Set;
 @NoArgsConstructor
 @Table(name = "users")
 public class User extends BaseEntity {
+    @Column(name = "auth0_sub", nullable = false, unique = true, length = 255)
+    private String sub;
+
     @Column(nullable = false, length = 50)
     private String firstName;
 

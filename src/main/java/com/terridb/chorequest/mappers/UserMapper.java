@@ -1,8 +1,9 @@
 package com.terridb.chorequest.mappers;
 
-import com.terridb.chorequest.dtos.users.UserRequestDto;
+import com.terridb.chorequest.dtos.users.UserPatchDto;
 import com.terridb.chorequest.dtos.users.UserResponseDto;
 import com.terridb.chorequest.dtos.users.UserResponseSimpleDto;
+import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.User;
 import org.springframework.stereotype.Component;
 
@@ -11,14 +12,16 @@ import java.util.stream.Collectors;
 
 @Component
 public class UserMapper {
-    public User toEntity(UserRequestDto requestDto, User user) {
-        if (user == null) {
-            user = new User();
+    public User patch(UserPatchDto patchDto, User user) {
+        if (patchDto.getFirstName() != null) {
+            user.setFirstName(patchDto.getFirstName());
         }
-
-        user.setFirstName(requestDto.getFirstName());
-        user.setLastName(requestDto.getLastName());
-        user.setAvatarUrl(requestDto.getAvatarUrl());
+        if (patchDto.getLastName() != null) {
+            user.setLastName(patchDto.getLastName());
+        }
+        if (patchDto.getAvatarUrl() != null) {
+            user.setAvatarUrl(patchDto.getAvatarUrl());
+        }
 
         return user;
     }
@@ -31,6 +34,7 @@ public class UserMapper {
         responseDto.setLastName(user.getLastName());
         responseDto.setAvatarUrl(user.getAvatarUrl());
         responseDto.setHouseholdIds(user.getMemberships().stream()
+                .filter(HouseholdMember::isActive)
                 .map(householdMember -> householdMember.getHousehold().getId())
                 .collect(Collectors.toList()));
 
@@ -44,6 +48,10 @@ public class UserMapper {
     }
 
     public UserResponseSimpleDto toSimpleDto(User user) {
+        if (user == null) {
+            return null;
+        }
+
         UserResponseSimpleDto responseDto = new UserResponseSimpleDto();
 
         responseDto.setId(user.getId());

@@ -40,33 +40,44 @@ public class TaskAssignmentService {
         this.householdService = householdService;
     }
 
-    public TaskAssignmentResponseDto getAssignmentById(UUID id) {
-        return taskAssignmentMapper.toDto(getAssignment(id));
+    public TaskAssignmentResponseDto getAssignmentById(UUID id, String sub) {
+        TaskAssignment assignment = getAssignment(id);
+        householdService.requireMembership(assignment.getTask().getHousehold(), sub);
+
+        return taskAssignmentMapper.toDto(assignment);
     }
 
-    public List<TaskAssignmentResponseDto> getAssignmentsForTask(UUID id) {
+    public List<TaskAssignmentResponseDto> getAssignmentsForTask(UUID id, String sub) {
         Task task = getTask(id);
+        householdService.requireMembership(task.getHousehold(), sub);
+
         Set<TaskAssignment> assignments = taskAssignmentRepository.findByTaskOrderByDueDateDesc(task);
 
         return taskAssignmentMapper.toDto(assignments.stream().toList());
     }
 
-    public List<TaskAssignmentResponseDto> getAssignmentsForMember(UUID id) {
+    public List<TaskAssignmentResponseDto> getAssignmentsForMember(UUID id, String sub) {
         HouseholdMember member = getMember(id);
+        householdService.requireMembership(member.getHousehold(), sub);
+
         Set<TaskAssignment> assignments = taskAssignmentRepository.findByHouseholdMemberOrderByDueDateDesc(member);
 
         return taskAssignmentMapper.toDto(assignments.stream().toList());
     }
 
-    public List<TaskAssignmentResponseDto> getOpenAssignmentsForHousehold(UUID householdId) {
+    public List<TaskAssignmentResponseDto> getOpenAssignmentsForHousehold(UUID householdId, String sub) {
         Household household = householdService.getHousehold(householdId);
+        householdService.requireMembership(household, sub);
+
         Set<TaskAssignment> assignments = taskAssignmentRepository.findByTask_HouseholdAndTaskCompletionIsNullOrderByDueDateAsc(household);
 
         return taskAssignmentMapper.toDto(assignments.stream().toList());
     }
 
-    public TaskAssignmentResponseDto updateAssignment(UUID id, TaskAssignmentRequestDto input) {
+    public TaskAssignmentResponseDto updateAssignment(UUID id, TaskAssignmentRequestDto input, String sub) {
         TaskAssignment assignment = getAssignment(id);
+        householdService.requireMembership(assignment.getTask().getHousehold(), sub);
+
         HouseholdMember member = getMember(input.getHouseholdMemberId());
 
         if (assignment.getTaskCompletion() != null) {
@@ -77,12 +88,17 @@ public class TaskAssignmentService {
             throw new BadRequestException("Household member does not belong to this task's household");
         }
 
+        if (!member.isActive()) {
+            throw new BadRequestException("Household member has left the household");
+        }
+
         assignment.setHouseholdMember(member);
         return taskAssignmentMapper.toDto(taskAssignmentRepository.save(assignment));
     }
 
-    public void deleteAssignment(UUID id) {
+    public void deleteAssignment(UUID id, String sub) {
         TaskAssignment assignment = getAssignment(id);
+        householdService.requireMembership(assignment.getTask().getHousehold(), sub);
 
         if (assignment.getTaskCompletion() != null) {
             throw new BadRequestException("Cannot delete a completed task assignment");
@@ -91,19 +107,36 @@ public class TaskAssignmentService {
         taskAssignmentRepository.delete(assignment);
     }
 
-    public TaskAssignmentResponseDto assignTaskToMember(UUID taskId, UUID memberId) {
+    public TaskAssignmentResponseDto assignTaskToMember(UUID taskId, UUID memberId, String sub) {
         HouseholdMember member = getMember(memberId);
         Task task = getTask(taskId);
+        householdService.requireMembership(task.getHousehold(), sub);
 
         if (!member.getHousehold().getId().equals(task.getHousehold().getId())) {
             throw new BadRequestException("Household member does not belong to this task's household");
         }
 
+        if (!member.isActive()) {
+            throw new BadRequestException("Household member has left the household");
+        }
+
         return createAssignment(task, member, calculateTaskDueDate(task));
     }
 
+    public TaskAssignmentResponseDto createInitialAssignment(Task task) {
+        return createAssignment(task, resolveAssignee(task), calculateTaskDueDate(task));
+    }
+
+    public void createNextAssignmentIfRecurring(Task task) {
+        if (!isRecurring(task)) {
+            return;
+        }
+
+        createAssignment(task, resolveAssignee(task), calculateTaskDueDate(task));
+    }
+
     public void generateDueAssignments() {
-        List<Task> tasks = taskRepository.findByFrequencyNot(Frequency.AS_NEEDED);
+        List<Task> tasks = taskRepository.findByFrequencyNotIn(List.of(Frequency.AS_NEEDED, Frequency.ONCE));
 
         for (Task task : tasks) {
             if (taskAssignmentRepository.existsByTaskAndTaskCompletionIsNull(task)) {
@@ -111,12 +144,35 @@ public class TaskAssignmentService {
             }
 
             LocalDate dueDate = calculateTaskDueDate(task);
-            if (dueDate == null || dueDate.isAfter(LocalDate.now())) {
+            if (dueDate.isAfter(LocalDate.now())) {
                 continue;
             }
 
             createAssignment(task, resolveAssignee(task), dueDate);
         }
+    }
+
+    public void reassignOpenAssignments(HouseholdMember leavingMember) {
+        List<HouseholdMember> members = householdMemberRepository.findByHouseholdAndLeftAtIsNullOrderByCreatedAtAsc(leavingMember.getHousehold());
+        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByHouseholdMemberAndTaskCompletionIsNull(leavingMember);
+
+        if (members.size() <= 1) {
+            taskAssignmentRepository.deleteAll(openAssignments);
+            return;
+        }
+
+        HouseholdMember nextMember = memberAfter(members, leavingMember.getId());
+        for (TaskAssignment assignment : openAssignments) {
+            HouseholdMember owner = assignment.getTask().getResponsibleMember();
+            boolean hasOtherSoloOwner = assignment.getTask().getStrategy() == AssignmentStrategy.SOLO
+                    && owner != null && !owner.getId().equals(leavingMember.getId());
+            assignment.setHouseholdMember(hasOtherSoloOwner ? owner : nextMember);
+        }
+        taskAssignmentRepository.saveAll(openAssignments);
+    }
+
+    private boolean isRecurring(Task task) {
+        return task.getFrequency() != Frequency.AS_NEEDED && task.getFrequency() != Frequency.ONCE;
     }
 
     private TaskAssignmentResponseDto createAssignment(Task task, HouseholdMember member, LocalDate dueDate) {
@@ -132,31 +188,35 @@ public class TaskAssignmentService {
         if (task.getStrategy() == AssignmentStrategy.SOLO) {
             HouseholdMember member = task.getResponsibleMember();
             if (member == null) {
-                throw new IllegalStateException("Task " + task.getId() + " has SOLO strategy but no responsible member set");
+                throw new BadRequestException("Task " + task.getId() + " has SOLO strategy but no responsible member set");
             }
             return member;
         }
 
-        List<HouseholdMember> members = householdMemberRepository.findByHouseholdOrderByCreatedAtAsc(task.getHousehold());
+        List<HouseholdMember> members = householdMemberRepository.findByHouseholdAndLeftAtIsNullOrderByCreatedAtAsc(task.getHousehold());
         if (members.isEmpty()) {
-            throw new IllegalStateException("Household " + task.getHousehold().getId() + " has no members to rotate task " + task.getId());
+            throw new BadRequestException("Household " + task.getHousehold().getId() + " has no members to rotate task " + task.getId());
         }
 
         Optional<TaskAssignment> lastAssignment = taskAssignmentRepository.findFirstByTaskOrderByCreatedAtDesc(task);
         if (lastAssignment.isEmpty()) {
-            return members.getFirst();
+            HouseholdMember startingMember = task.getResponsibleMember();
+            return startingMember != null ? startingMember : members.getFirst();
         }
 
-        UUID lastMemberId = lastAssignment.get().getHouseholdMember().getId();
-        int lastIndex = -1;
+        return memberAfter(members, lastAssignment.get().getHouseholdMember().getId());
+    }
+
+    private HouseholdMember memberAfter(List<HouseholdMember> members, UUID memberId) {
+        int index = -1;
         for (int i = 0; i < members.size(); i++) {
-            if (members.get(i).getId().equals(lastMemberId)) {
-                lastIndex = i;
+            if (members.get(i).getId().equals(memberId)) {
+                index = i;
                 break;
             }
         }
 
-        return members.get((lastIndex + 1) % members.size());
+        return members.get((index + 1) % members.size());
     }
 
     private LocalDate calculateTaskDueDate(Task task) {

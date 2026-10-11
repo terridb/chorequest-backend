@@ -1,11 +1,13 @@
 package com.terridb.chorequest.mappers;
 
+import com.terridb.chorequest.dtos.households.HouseholdPatchDto;
 import com.terridb.chorequest.dtos.households.HouseholdRequestDto;
 import com.terridb.chorequest.dtos.households.HouseholdResponseDto;
 import com.terridb.chorequest.entities.Household;
+import com.terridb.chorequest.entities.HouseholdMember;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,26 @@ public class HouseholdMapper {
         return household;
     }
 
+    public Household patch(HouseholdPatchDto patchDto, Household household) {
+        if (patchDto.getName() != null) {
+            household.setName(patchDto.getName());
+        }
+        if (patchDto.getType() != null) {
+            household.setType(patchDto.getType());
+        }
+        if (patchDto.getPhotoUrl() != null) {
+            household.setPhotoUrl(patchDto.getPhotoUrl());
+        }
+        if (patchDto.getCity() != null) {
+            household.setCity(patchDto.getCity());
+        }
+        if (patchDto.getZipcode() != null) {
+            household.setZipcode(patchDto.getZipcode());
+        }
+
+        return household;
+    }
+
     public HouseholdResponseDto toDto(Household household) {
         HouseholdResponseDto responseDto = new HouseholdResponseDto();
 
@@ -40,7 +62,9 @@ public class HouseholdMapper {
         responseDto.setPhotoUrl(household.getPhotoUrl());
         responseDto.setCity(household.getCity());
         responseDto.setZipcode(household.getZipcode());
-        responseDto.setMembers(householdMemberMapper.toDto(new ArrayList<>(household.getMembers())));
+        responseDto.setMembers(householdMemberMapper.toDto(household.getMembers().stream()
+                .filter(HouseholdMember::isActive)
+                .collect(Collectors.toList())));
 
         return responseDto;
     }
