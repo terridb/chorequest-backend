@@ -62,14 +62,11 @@ public class HouseholdInviteService {
         return householdInviteMapper.toDto(invite);
     }
 
-    public HouseholdInviteResponseDto getCurrentInvite(UUID householdId, String sub) {
+    public Optional<HouseholdInviteResponseDto> getCurrentInvite(UUID householdId, String sub) {
         Household household = householdService.getHousehold(householdId);
         householdService.requireAdmin(household, sub);
 
-        HouseholdInvite invite = getActiveInviteForHousehold(household)
-                .orElseThrow(() -> new RecordNotFoundException("Household with id " + householdId + " has no active invite"));
-
-        return householdInviteMapper.toDto(invite);
+        return getActiveInviteForHousehold(household).map(householdInviteMapper::toDto);
     }
 
     public void revokeInvite(UUID householdId, UUID inviteId, String sub) {

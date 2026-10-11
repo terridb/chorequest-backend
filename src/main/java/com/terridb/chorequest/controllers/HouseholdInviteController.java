@@ -27,7 +27,9 @@ public class HouseholdInviteController {
 
     @GetMapping("/households/{householdId}/invites/current")
     public ResponseEntity<HouseholdInviteResponseDto> getCurrentInvite(@PathVariable UUID householdId, @AuthenticationPrincipal Jwt jwt) {
-        return ResponseEntity.ok(householdInviteService.getCurrentInvite(householdId, jwt.getSubject()));
+        return householdInviteService.getCurrentInvite(householdId, jwt.getSubject())
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @DeleteMapping("/households/{householdId}/invites/{id}")
