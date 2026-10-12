@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.2](https://github.com/terridb/chorequest-backend/compare/v0.3.1...v0.3.2) (2026-10-12)
+
+
+### Bug Fixes
+
+* synced open assignments when updating a task ([4a0192b](https://github.com/terridb/chorequest-backend/commit/4a0192b3a9f09ce04a022913ff469b45b172ce85))
+* synced open assignments when updating a task ([7a8f73f](https://github.com/terridb/chorequest-backend/commit/7a8f73f6f30a682c4aa61a583443992ce7691963))
+
 ## [0.3.1](https://github.com/terridb/chorequest-backend/compare/v0.3.0...v0.3.1) (2026-10-12)
 
 
