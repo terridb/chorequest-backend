@@ -22,5 +22,7 @@ public interface TaskAssignmentRepository extends JpaRepository<TaskAssignment, 
 
     List<TaskAssignment> findByHouseholdMemberAndTaskCompletionIsNull(HouseholdMember householdMember);
 
+    List<TaskAssignment> findByTaskAndTaskCompletionIsNull(Task task);
+
     Optional<TaskAssignment> findFirstByTaskOrderByCreatedAtDesc(Task task);
 }

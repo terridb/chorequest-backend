@@ -130,6 +130,38 @@ public class TaskAssignmentService {
         return createAssignment(task, resolveAssignee(task), calculateInitialDueDate(task));
     }
 
+    public void rescheduleOpenAssignments(Task task) {
+        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByTaskAndTaskCompletionIsNull(task);
+        LocalDate dueDate = calculateInitialDueDate(task);
+
+        // A task switched from ONCE or AS_NEEDED to a recurring frequency may have nothing open yet
+        if (openAssignments.isEmpty()) {
+            if (isRecurring(task)) {
+                createAssignment(task, resolveAssignee(task), dueDate);
+            }
+            return;
+        }
+
+        for (TaskAssignment assignment : openAssignments) {
+            assignment.setDueDate(dueDate);
+        }
+        taskAssignmentRepository.saveAll(openAssignments);
+    }
+
+    // For SOLO tasks the responsible member owns every assignment; for ROTATING tasks the rotation restarts with them
+    public void reassignOpenAssignmentsToResponsibleMember(Task task) {
+        HouseholdMember responsibleMember = task.getResponsibleMember();
+        if (responsibleMember == null) {
+            return;
+        }
+
+        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByTaskAndTaskCompletionIsNull(task);
+        for (TaskAssignment assignment : openAssignments) {
+            assignment.setHouseholdMember(responsibleMember);
+        }
+        taskAssignmentRepository.saveAll(openAssignments);
+    }
+
     public void createNextAssignmentIfRecurring(Task task) {
         if (!isRecurring(task)) {
             return;

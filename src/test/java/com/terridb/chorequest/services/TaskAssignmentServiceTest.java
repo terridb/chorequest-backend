@@ -149,6 +149,76 @@ class TaskAssignmentServiceTest {
         verify(taskAssignmentRepository, never()).save(any(TaskAssignment.class));
     }
 
+    @Test
+    void rescheduleOpenAssignments_movesOpenAssignmentToNewStartingDate() {
+        Task task = dailySoloTaskStarting(LocalDate.of(2026, 10, 20), "UTC");
+        TaskAssignment assignment = openAssignment(task, task.getResponsibleMember());
+        assignment.setDueDate(LocalDate.of(2026, 10, 12));
+
+        when(taskAssignmentRepository.findByTaskAndTaskCompletionIsNull(task)).thenReturn(List.of(assignment));
+
+        taskAssignmentService.rescheduleOpenAssignments(task);
+
+        assertThat(assignment.getDueDate()).isEqualTo(LocalDate.of(2026, 10, 20));
+        verify(taskAssignmentRepository).saveAll(List.of(assignment));
+    }
+
+    @Test
+    void rescheduleOpenAssignments_createsAssignment_whenRecurringTaskHasNoneOpen() {
+        Task task = dailySoloTaskStarting(LocalDate.of(2026, 10, 20), "UTC");
+
+        when(taskAssignmentRepository.findByTaskAndTaskCompletionIsNull(task)).thenReturn(List.of());
+        when(taskAssignmentRepository.save(any(TaskAssignment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        taskAssignmentService.rescheduleOpenAssignments(task);
+
+        ArgumentCaptor<TaskAssignment> saved = ArgumentCaptor.forClass(TaskAssignment.class);
+        verify(taskAssignmentRepository).save(saved.capture());
+        assertThat(saved.getValue().getDueDate()).isEqualTo(LocalDate.of(2026, 10, 20));
+        assertThat(saved.getValue().getHouseholdMember()).isEqualTo(task.getResponsibleMember());
+    }
+
+    @Test
+    void rescheduleOpenAssignments_createsNothing_whenNonRecurringTaskHasNoneOpen() {
+        Task task = dailySoloTaskStarting(LocalDate.of(2026, 10, 20), "UTC");
+        task.setFrequency(Frequency.ONCE);
+
+        when(taskAssignmentRepository.findByTaskAndTaskCompletionIsNull(task)).thenReturn(List.of());
+
+        taskAssignmentService.rescheduleOpenAssignments(task);
+
+        verify(taskAssignmentRepository, never()).save(any(TaskAssignment.class));
+    }
+
+    @Test
+    void reassignOpenAssignmentsToResponsibleMember_movesOpenAssignmentToNewResponsibleMember() {
+        Household household = new Household();
+        HouseholdMember previous = member(household);
+        HouseholdMember newOwner = member(household);
+        Task task = task(AssignmentStrategy.SOLO, newOwner);
+        TaskAssignment assignment = openAssignment(task, previous);
+
+        when(taskAssignmentRepository.findByTaskAndTaskCompletionIsNull(task)).thenReturn(List.of(assignment));
+
+        taskAssignmentService.reassignOpenAssignmentsToResponsibleMember(task);
+
+        assertThat(assignment.getHouseholdMember()).isEqualTo(newOwner);
+        verify(taskAssignmentRepository).saveAll(List.of(assignment));
+    }
+
+    @Test
+    void reassignOpenAssignmentsToResponsibleMember_keepsAssignee_whenNoResponsibleMember() {
+        Household household = new Household();
+        HouseholdMember current = member(household);
+        Task task = task(AssignmentStrategy.ROTATING, null);
+        TaskAssignment assignment = openAssignment(task, current);
+
+        taskAssignmentService.reassignOpenAssignmentsToResponsibleMember(task);
+
+        assertThat(assignment.getHouseholdMember()).isEqualTo(current);
+        verify(taskAssignmentRepository, never()).saveAll(anyList());
+    }
+
     private Task dailySoloTaskStarting(LocalDate startingDate, String timeZone) {
         Household household = new Household();
         household.setTimeZone(timeZone);
