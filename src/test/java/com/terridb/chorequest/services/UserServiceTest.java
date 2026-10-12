@@ -9,6 +9,7 @@ import com.terridb.chorequest.exceptions.AccessDeniedException;
 import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.UserMapper;
+import com.terridb.chorequest.repositories.HouseholdInviteRepository;
 import com.terridb.chorequest.repositories.HouseholdMemberRepository;
 import com.terridb.chorequest.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,11 +44,14 @@ class UserServiceTest {
     @Mock
     private HouseholdMemberRepository householdMemberRepository;
 
+    @Mock
+    private HouseholdInviteRepository householdInviteRepository;
+
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, new UserMapper(), householdMemberRepository);
+        userService = new UserService(userRepository, new UserMapper(), householdMemberRepository, householdInviteRepository);
     }
 
     @Test
@@ -142,6 +146,19 @@ class UserServiceTest {
 
         verify(userRepository).delete(user);
     }
+
+    @Test
+    void deleteUser_deletesInvitesCreatedByUser() {
+        UUID id = UUID.randomUUID();
+        User user = userWithSub(OWNER_SUB);
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+
+        userService.deleteUser(id, OWNER_SUB);
+
+        verify(householdInviteRepository).deleteAllByCreatedBy(user);
+        verify(userRepository).delete(user);
+    }
+
 
     @Test
     void deleteUser_keepsPastMembershipsWithoutUser_whenUserLeftTheirHouseholds() {

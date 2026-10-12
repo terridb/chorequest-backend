@@ -9,6 +9,7 @@ import com.terridb.chorequest.exceptions.AccessDeniedException;
 import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.UserMapper;
+import com.terridb.chorequest.repositories.HouseholdInviteRepository;
 import com.terridb.chorequest.repositories.HouseholdMemberRepository;
 import com.terridb.chorequest.repositories.UserRepository;
 import org.springframework.stereotype.Service;
@@ -22,11 +23,13 @@ public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final HouseholdMemberRepository householdMemberRepository;
+    private final HouseholdInviteRepository householdInviteRepository;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, HouseholdMemberRepository householdMemberRepository) {
+    public UserService(UserRepository userRepository, UserMapper userMapper, HouseholdMemberRepository householdMemberRepository, HouseholdInviteRepository householdInviteRepository) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.householdMemberRepository = householdMemberRepository;
+        this.householdInviteRepository = householdInviteRepository;
     }
 
     public UserResponseDto getUserById(UUID id, String sub) {
@@ -57,6 +60,7 @@ public class UserService {
         pastMemberships.forEach(membership -> membership.setUser(null));
         householdMemberRepository.saveAll(pastMemberships);
 
+        householdInviteRepository.deleteAllByCreatedBy(user);
         userRepository.delete(user);
     }
 
