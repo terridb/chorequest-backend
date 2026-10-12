@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/terridb/chorequest-backend/compare/v0.3.0...v0.3.1) (2026-10-12)
+
+
+### Bug Fixes
+
+* used the starting date as the first due date for repeating tasks ([eaa4df6](https://github.com/terridb/chorequest-backend/commit/eaa4df632d27d7d4c3bd95aef67cead2b999e7c6))
+* used the starting date as the first due date for repeating tasks ([49ec662](https://github.com/terridb/chorequest-backend/commit/49ec662b62b6e11ef9cf7e2fac4d0d5f03f647d1))
+
 ## [0.3.0](https://github.com/terridb/chorequest-backend/compare/v0.2.2...v0.3.0) (2026-10-12)
 
 
