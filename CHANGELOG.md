@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2](https://github.com/terridb/chorequest-backend/compare/v0.2.1...v0.2.2) (2026-10-12)
+
+
+### Bug Fixes
+
+* upgraded spring boot, tomcat and jackson for vulnerabilities ([a8100a3](https://github.com/terridb/chorequest-backend/commit/a8100a3f2fdfcc4d7187cb7d2508be7728d3dfbc))
+* upgraded spring boot, tomcat and jackson for vulnerabilities ([53be5a6](https://github.com/terridb/chorequest-backend/commit/53be5a66e44310ebe92f61061d3219643082233a))
+
 ## [0.2.1](https://github.com/terridb/chorequest-backend/compare/v0.2.0...v0.2.1) (2026-10-12)
 
 
