@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.1](https://github.com/terridb/chorequest-backend/compare/v0.2.0...v0.2.1) (2026-10-12)
+
+
+### Bug Fixes
+
+* loaded auth0 configuration on first request instead of at startup ([63ce5e7](https://github.com/terridb/chorequest-backend/commit/63ce5e7b991bc9e0ba46ef8da029e2e17928823c))
+* loaded auth0 configuration on first request instead of at startup ([e473224](https://github.com/terridb/chorequest-backend/commit/e473224cb78e8b40774302baf1207d25db017feb))
+
 ## [0.2.0](https://github.com/terridb/chorequest-backend/compare/v0.1.0...v0.2.0) (2026-10-12)
 
 
