@@ -127,7 +127,7 @@ public class TaskAssignmentService {
     }
 
     public TaskAssignmentResponseDto createInitialAssignment(Task task) {
-        return createAssignment(task, resolveAssignee(task), calculateTaskDueDate(task));
+        return createAssignment(task, resolveAssignee(task), calculateInitialDueDate(task));
     }
 
     public void createNextAssignmentIfRecurring(Task task) {
@@ -220,6 +220,19 @@ public class TaskAssignmentService {
         }
 
         return members.get((index + 1) % members.size());
+    }
+
+    private LocalDate calculateInitialDueDate(Task task) {
+        if (!isRecurring(task)) {
+            return calculateTaskDueDate(task);
+        }
+
+        LocalDate today = today(task);
+        if (!task.getStartingDate().isBefore(today)) {
+            return task.getStartingDate();
+        }
+
+        return task.isAlwaysSameDay() ? calculateTaskDueDate(task) : today;
     }
 
     private LocalDate calculateTaskDueDate(Task task) {
