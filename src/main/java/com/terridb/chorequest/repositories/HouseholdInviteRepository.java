@@ -2,6 +2,7 @@ package com.terridb.chorequest.repositories;
 
 import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdInvite;
+import com.terridb.chorequest.entities.User;
 import com.terridb.chorequest.entities.enums.HouseholdInviteStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,4 +14,6 @@ public interface HouseholdInviteRepository extends JpaRepository<HouseholdInvite
     Optional<HouseholdInvite> findByCode(String code);
 
     Optional<HouseholdInvite> findByHouseholdAndStatusAndExpiresAtAfter(Household household, HouseholdInviteStatus status, LocalDateTime now);
+
+    void deleteAllByCreatedBy(User createdBy);
 }
