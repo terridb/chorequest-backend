@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+      - 'ci/**'
+      - 'chore/**'
+      - 'fix/**'
+      - 'hotfix/**'
+      - 'refactor/**'
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - '.github/workflows/**'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  unit-test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: chorequest
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Java 25
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: 'maven'
+      - name: Run unit tests
+        run: ./mvnw test -B
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: chorequest
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+      - name: Set up Java 25
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          java-version: '25'
+          cache: 'maven'
+      - name: Run all tests
+        run: ./mvnw verify -B
