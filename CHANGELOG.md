@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.0](https://github.com/terridb/chorequest-backend/compare/v0.2.2...v0.3.0) (2026-10-12)
+
+
+### Features
+
+* deleted the auth0 user when deleting an account ([b5d1c3d](https://github.com/terridb/chorequest-backend/commit/b5d1c3d5f678ffa11841941e1bc541ec32cc67cc))
+
+
+### Bug Fixes
+
+* deleted invites created by a user when deleting the user ([65eaec1](https://github.com/terridb/chorequest-backend/commit/65eaec10dd7437d0820ef1aa44fc40ea8d925e60))
+
 ## [0.2.2](https://github.com/terridb/chorequest-backend/compare/v0.2.1...v0.2.2) (2026-10-12)
 
 
