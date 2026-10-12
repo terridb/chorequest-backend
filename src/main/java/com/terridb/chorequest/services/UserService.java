@@ -1,5 +1,6 @@
 package com.terridb.chorequest.services;
 
+import com.terridb.chorequest.clients.Auth0ManagementClient;
 import com.terridb.chorequest.dtos.users.MeRequestDto;
 import com.terridb.chorequest.dtos.users.UserPatchDto;
 import com.terridb.chorequest.dtos.users.UserResponseDto;
@@ -24,12 +25,14 @@ public class UserService {
     private final UserMapper userMapper;
     private final HouseholdMemberRepository householdMemberRepository;
     private final HouseholdInviteRepository householdInviteRepository;
+    private final Auth0ManagementClient auth0ManagementClient;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, HouseholdMemberRepository householdMemberRepository, HouseholdInviteRepository householdInviteRepository) {
+    public UserService(UserRepository userRepository, UserMapper userMapper, HouseholdMemberRepository householdMemberRepository, HouseholdInviteRepository householdInviteRepository, Auth0ManagementClient auth0ManagementClient) {
         this.userRepository = userRepository;
         this.userMapper = userMapper;
         this.householdMemberRepository = householdMemberRepository;
         this.householdInviteRepository = householdInviteRepository;
+        this.auth0ManagementClient = auth0ManagementClient;
     }
 
     public UserResponseDto getUserById(UUID id, String sub) {
@@ -62,6 +65,9 @@ public class UserService {
 
         householdInviteRepository.deleteAllByCreatedBy(user);
         userRepository.delete(user);
+        userRepository.flush();
+
+        auth0ManagementClient.deleteUser(user.getSub());
     }
 
     private void requireSelf(User user, String sub) {

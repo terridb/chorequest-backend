@@ -1,5 +1,6 @@
 package com.terridb.chorequest.services;
 
+import com.terridb.chorequest.clients.Auth0ManagementClient;
 import com.terridb.chorequest.dtos.users.MeRequestDto;
 import com.terridb.chorequest.dtos.users.UserPatchDto;
 import com.terridb.chorequest.dtos.users.UserResponseDto;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -28,6 +30,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -47,11 +50,14 @@ class UserServiceTest {
     @Mock
     private HouseholdInviteRepository householdInviteRepository;
 
+    @Mock
+    private Auth0ManagementClient auth0ManagementClient;
+
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, new UserMapper(), householdMemberRepository, householdInviteRepository);
+        userService = new UserService(userRepository, new UserMapper(), householdMemberRepository, householdInviteRepository, auth0ManagementClient);
     }
 
     @Test
@@ -134,6 +140,7 @@ class UserServiceTest {
         assertThatThrownBy(() -> userService.deleteUser(id, OWNER_SUB))
                 .isInstanceOf(BadRequestException.class);
         verify(userRepository, never()).delete(any());
+        verify(auth0ManagementClient, never()).deleteUser(any());
     }
 
     @Test
@@ -159,6 +166,18 @@ class UserServiceTest {
         verify(userRepository).delete(user);
     }
 
+    @Test
+    void deleteUser_deletesAuth0User_afterDeletingUser() {
+        UUID id = UUID.randomUUID();
+        User user = userWithSub(OWNER_SUB);
+        when(userRepository.findById(id)).thenReturn(Optional.of(user));
+
+        userService.deleteUser(id, OWNER_SUB);
+
+        InOrder inOrder = inOrder(userRepository, auth0ManagementClient);
+        inOrder.verify(userRepository).flush();
+        inOrder.verify(auth0ManagementClient).deleteUser(OWNER_SUB);
+    }
 
     @Test
     void deleteUser_keepsPastMembershipsWithoutUser_whenUserLeftTheirHouseholds() {
