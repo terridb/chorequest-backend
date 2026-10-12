@@ -82,6 +82,7 @@ public class TaskService {
         return taskMapper.toDto(savedTask);
     }
 
+    @Transactional
     public TaskResponseDto updateTask(UUID id, TaskPatchDto input, String sub) {
         Task task =  getTask(id);
         householdService.requireMembership(task.getHousehold(), sub);
@@ -91,7 +92,17 @@ public class TaskService {
             applyResponsibleMember(patchedTask, patchedTask.getStrategy(), input.getResponsibleMemberId());
         }
 
-        return taskMapper.toDto(taskRepository.save(patchedTask));
+        Task savedTask = taskRepository.save(patchedTask);
+
+        if (input.getStartingDate() != null || input.getFrequency() != null || input.getAlwaysSameDay() != null) {
+            taskAssignmentService.rescheduleOpenAssignments(savedTask);
+        }
+
+        if (input.getStrategy() != null || input.getResponsibleMemberId() != null) {
+            taskAssignmentService.reassignOpenAssignmentsToResponsibleMember(savedTask);
+        }
+
+        return taskMapper.toDto(savedTask);
     }
 
     public void deleteTask(UUID id, String sub) {
