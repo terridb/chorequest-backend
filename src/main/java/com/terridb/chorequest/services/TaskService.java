@@ -15,6 +15,7 @@ import com.terridb.chorequest.mappers.TaskMapper;
 import com.terridb.chorequest.repositories.HouseholdMemberRepository;
 import com.terridb.chorequest.repositories.TaskRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.List;
@@ -66,6 +67,7 @@ public class TaskService {
         return taskMapper.toDto(task);
     }
 
+    @Transactional
     public TaskResponseDto postTask(UUID householdId, TaskRequestDto input, String sub) {
         Household household = householdService.getHousehold(householdId);
         householdService.requireMembership(household, sub);

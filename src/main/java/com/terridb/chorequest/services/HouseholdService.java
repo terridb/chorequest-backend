@@ -13,6 +13,7 @@ import com.terridb.chorequest.mappers.HouseholdMapper;
 import com.terridb.chorequest.repositories.HouseholdMemberRepository;
 import com.terridb.chorequest.repositories.HouseholdRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -51,6 +52,7 @@ public class HouseholdService {
         return householdMapper.toDto(households);
     }
 
+    @Transactional
     public HouseholdResponseDto postHousehold(HouseholdRequestDto input, String sub) {
         User creator = userService.getUserBySub(sub);
         Household household = householdMapper.toEntity(input, null);

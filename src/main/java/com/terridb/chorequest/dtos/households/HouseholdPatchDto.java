@@ -1,6 +1,7 @@
 package com.terridb.chorequest.dtos.households;
 
 import com.terridb.chorequest.entities.enums.HouseholdType;
+import com.terridb.chorequest.validation.ValidTimeZone;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -21,4 +22,7 @@ public class HouseholdPatchDto {
 
     @Size(max = 10, message = "Zipcode must be at most 10 characters")
     private String zipcode;
+
+    @ValidTimeZone
+    private String timeZone;
 }

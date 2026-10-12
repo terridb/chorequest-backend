@@ -29,6 +29,9 @@ public class HouseholdMapper {
         household.setPhotoUrl(requestDto.getPhotoUrl());
         household.setCity(requestDto.getCity());
         household.setZipcode(requestDto.getZipcode());
+        if (requestDto.getTimeZone() != null) {
+            household.setTimeZone(requestDto.getTimeZone());
+        }
 
         return household;
     }
@@ -49,6 +52,9 @@ public class HouseholdMapper {
         if (patchDto.getZipcode() != null) {
             household.setZipcode(patchDto.getZipcode());
         }
+        if (patchDto.getTimeZone() != null) {
+            household.setTimeZone(patchDto.getTimeZone());
+        }
 
         return household;
     }
@@ -62,6 +68,7 @@ public class HouseholdMapper {
         responseDto.setPhotoUrl(household.getPhotoUrl());
         responseDto.setCity(household.getCity());
         responseDto.setZipcode(household.getZipcode());
+        responseDto.setTimeZone(household.getTimeZone());
         responseDto.setMembers(householdMemberMapper.toDto(household.getMembers().stream()
                 .filter(HouseholdMember::isActive)
                 .collect(Collectors.toList())));

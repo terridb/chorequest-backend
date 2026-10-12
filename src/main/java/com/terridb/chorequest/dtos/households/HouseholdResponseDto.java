@@ -17,5 +17,6 @@ public class HouseholdResponseDto {
     private String photoUrl;
     private String city;
     private String zipcode;
+    private String timeZone;
     private List<HouseholdMemberResponseDto> members;
 }

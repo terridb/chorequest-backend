@@ -13,7 +13,9 @@ public class TaskAssignmentScheduler {
         this.taskAssignmentService = taskAssignmentService;
     }
 
-    @Scheduled(cron = "0 0 0 * * *")
+    // Households each have their own midnight, so check every 15 minutes (covers half- and quarter-hour offsets);
+    // generateDueAssignments skips tasks that already have an open assignment, so repeated runs are harmless
+    @Scheduled(cron = "0 */15 * * * *")
     public void generateDueAssignments() {
         taskAssignmentService.generateDueAssignments();
     }

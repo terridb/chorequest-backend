@@ -16,6 +16,7 @@ import com.terridb.chorequest.repositories.TaskAssignmentRepository;
 import com.terridb.chorequest.repositories.TaskRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
@@ -31,13 +32,15 @@ public class TaskAssignmentService {
     private final TaskAssignmentMapper taskAssignmentMapper;
     private final HouseholdMemberRepository householdMemberRepository;
     private final HouseholdService householdService;
+    private final Clock clock;
 
-    public TaskAssignmentService(TaskRepository taskRepository, TaskAssignmentRepository taskAssignmentRepository, TaskAssignmentMapper taskAssignmentMapper, HouseholdMemberRepository householdMemberRepository, HouseholdService householdService) {
+    public TaskAssignmentService(TaskRepository taskRepository, TaskAssignmentRepository taskAssignmentRepository, TaskAssignmentMapper taskAssignmentMapper, HouseholdMemberRepository householdMemberRepository, HouseholdService householdService, Clock clock) {
         this.taskRepository = taskRepository;
         this.taskAssignmentRepository = taskAssignmentRepository;
         this.taskAssignmentMapper = taskAssignmentMapper;
         this.householdMemberRepository = householdMemberRepository;
         this.householdService = householdService;
+        this.clock = clock;
     }
 
     public TaskAssignmentResponseDto getAssignmentById(UUID id, String sub) {
@@ -144,7 +147,7 @@ public class TaskAssignmentService {
             }
 
             LocalDate dueDate = calculateTaskDueDate(task);
-            if (dueDate.isAfter(LocalDate.now())) {
+            if (dueDate.isAfter(today(task))) {
                 continue;
             }
 
@@ -233,14 +236,19 @@ public class TaskAssignmentService {
         Period period = periodFor(frequency);
 
         if (task.isAlwaysSameDay()) {
+            LocalDate today = today(task);
             LocalDate dueDate = task.getStartingDate();
-            while (dueDate.isBefore(LocalDate.now())) {
+            while (dueDate.isBefore(today)) {
                 dueDate = dueDate.plus(period);
             }
             return dueDate;
         }
 
-        return LocalDate.now().plus(period);
+        return today(task).plus(period);
+    }
+
+    private LocalDate today(Task task) {
+        return LocalDate.now(clock.withZone(task.getHousehold().getZoneId()));
     }
 
     private Period periodFor(Frequency frequency) {
