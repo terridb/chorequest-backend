@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.3](https://github.com/terridb/chorequest-backend/compare/v0.3.2...v0.3.3) (2026-10-13)
+
+
+### Bug Fixes
+
+* created the next assignment after completing as needed quests an… ([52730e9](https://github.com/terridb/chorequest-backend/commit/52730e903d0756f4e3dfef06a2bea24f90e38a30))
+* created the next assignment after completing as needed quests and moved same day quests to their next due date ([597994f](https://github.com/terridb/chorequest-backend/commit/597994f61424d38221a9d700dfe4fd155d34aafd))
+
 ## [0.3.2](https://github.com/terridb/chorequest-backend/compare/v0.3.1...v0.3.2) (2026-10-12)
 
 
