@@ -74,7 +74,7 @@ public class TaskCompletionService {
         householdMemberRepository.save(member);
 
         TaskCompletion savedCompletion = taskCompletionRepository.save(completion);
-        taskAssignmentService.createNextAssignmentIfRecurring(assignment.getTask());
+        taskAssignmentService.createNextAssignment(assignment);
 
         return taskCompletionMapper.toDto(savedCompletion);
     }
