@@ -162,12 +162,13 @@ public class TaskAssignmentService {
         taskAssignmentRepository.saveAll(openAssignments);
     }
 
-    public void createNextAssignmentIfRecurring(Task task) {
-        if (!isRecurring(task)) {
+    public void createNextAssignment(TaskAssignment completedAssignment) {
+        Task task = completedAssignment.getTask();
+        if (task.getFrequency() == Frequency.ONCE) {
             return;
         }
 
-        createAssignment(task, resolveAssignee(task), calculateTaskDueDate(task));
+        createAssignment(task, resolveAssignee(task), calculateNextDueDate(task, completedAssignment.getDueDate()));
     }
 
     public void generateDueAssignments() {
@@ -265,6 +266,19 @@ public class TaskAssignmentService {
         }
 
         return task.isAlwaysSameDay() ? calculateTaskDueDate(task) : today;
+    }
+
+    private LocalDate calculateNextDueDate(Task task, LocalDate completedDueDate) {
+        LocalDate dueDate = calculateTaskDueDate(task);
+        if (dueDate == null || !task.isAlwaysSameDay() || completedDueDate == null) {
+            return dueDate;
+        }
+
+        Period period = periodFor(task.getFrequency());
+        while (!dueDate.isAfter(completedDueDate)) {
+            dueDate = dueDate.plus(period);
+        }
+        return dueDate;
     }
 
     private LocalDate calculateTaskDueDate(Task task) {

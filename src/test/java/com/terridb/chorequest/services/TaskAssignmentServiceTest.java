@@ -150,6 +150,83 @@ class TaskAssignmentServiceTest {
     }
 
     @Test
+    void createNextAssignment_schedulesNextWeek_whenSameDayTaskIsCompletedOnItsDueDate() {
+        Task task = dailySoloTaskStarting(LocalDate.of(2026, 10, 12), "UTC");
+        task.setFrequency(Frequency.WEEKLY);
+        TaskAssignment completed = openAssignment(task, task.getResponsibleMember());
+        completed.setDueDate(LocalDate.of(2026, 10, 12));
+
+        when(taskAssignmentRepository.save(any(TaskAssignment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        taskAssignmentService.createNextAssignment(completed);
+
+        ArgumentCaptor<TaskAssignment> saved = ArgumentCaptor.forClass(TaskAssignment.class);
+        verify(taskAssignmentRepository).save(saved.capture());
+        assertThat(saved.getValue().getDueDate()).isEqualTo(LocalDate.of(2026, 10, 19));
+    }
+
+    @Test
+    void createNextAssignment_skipsCompletedDueDate_whenSameDayTaskIsCompletedEarly() {
+        Task task = dailySoloTaskStarting(LocalDate.of(2026, 10, 5), "UTC");
+        task.setFrequency(Frequency.WEEKLY);
+        TaskAssignment completed = openAssignment(task, task.getResponsibleMember());
+        completed.setDueDate(LocalDate.of(2026, 10, 19));
+
+        when(taskAssignmentRepository.save(any(TaskAssignment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        taskAssignmentService.createNextAssignment(completed);
+
+        ArgumentCaptor<TaskAssignment> saved = ArgumentCaptor.forClass(TaskAssignment.class);
+        verify(taskAssignmentRepository).save(saved.capture());
+        assertThat(saved.getValue().getDueDate()).isEqualTo(LocalDate.of(2026, 10, 26));
+    }
+
+    @Test
+    void createNextAssignment_schedulesThisWeek_whenSameDayTaskIsCompletedLate() {
+        Task task = dailySoloTaskStarting(LocalDate.of(2026, 9, 28), "UTC");
+        task.setFrequency(Frequency.WEEKLY);
+        TaskAssignment completed = openAssignment(task, task.getResponsibleMember());
+        completed.setDueDate(LocalDate.of(2026, 10, 5));
+
+        when(taskAssignmentRepository.save(any(TaskAssignment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        taskAssignmentService.createNextAssignment(completed);
+
+        ArgumentCaptor<TaskAssignment> saved = ArgumentCaptor.forClass(TaskAssignment.class);
+        verify(taskAssignmentRepository).save(saved.capture());
+        assertThat(saved.getValue().getDueDate()).isEqualTo(LocalDate.of(2026, 10, 12));
+    }
+
+    @Test
+    void createNextAssignment_createsUndatedAssignment_whenAsNeededTaskIsCompleted() {
+        Task task = dailySoloTaskStarting(LocalDate.of(2026, 10, 12), "UTC");
+        task.setFrequency(Frequency.AS_NEEDED);
+        task.setAlwaysSameDay(false);
+        TaskAssignment completed = openAssignment(task, task.getResponsibleMember());
+
+        when(taskAssignmentRepository.save(any(TaskAssignment.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        taskAssignmentService.createNextAssignment(completed);
+
+        ArgumentCaptor<TaskAssignment> saved = ArgumentCaptor.forClass(TaskAssignment.class);
+        verify(taskAssignmentRepository).save(saved.capture());
+        assertThat(saved.getValue().getDueDate()).isNull();
+        assertThat(saved.getValue().getHouseholdMember()).isEqualTo(task.getResponsibleMember());
+    }
+
+    @Test
+    void createNextAssignment_createsNothing_whenOnceTaskIsCompleted() {
+        Task task = dailySoloTaskStarting(LocalDate.of(2026, 10, 12), "UTC");
+        task.setFrequency(Frequency.ONCE);
+        TaskAssignment completed = openAssignment(task, task.getResponsibleMember());
+        completed.setDueDate(LocalDate.of(2026, 10, 12));
+
+        taskAssignmentService.createNextAssignment(completed);
+
+        verify(taskAssignmentRepository, never()).save(any(TaskAssignment.class));
+    }
+
+    @Test
     void rescheduleOpenAssignments_movesOpenAssignmentToNewStartingDate() {
         Task task = dailySoloTaskStarting(LocalDate.of(2026, 10, 20), "UTC");
         TaskAssignment assignment = openAssignment(task, task.getResponsibleMember());
