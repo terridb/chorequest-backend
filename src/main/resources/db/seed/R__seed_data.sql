@@ -2,7 +2,7 @@
 
 INSERT INTO users (id, created_at, updated_at, first_name, last_name, avatar_url, auth0_sub)
 VALUES
-    ('11111111-1111-1111-1111-111111111111', now(), now(), 'Terri', 'de Boer', NULL, 'google-oauth2|105956923986449548530'),
+    ('11111111-1111-1111-1111-111111111111', now(), now(), 'Terri', 'de Boer', NULL, 'seed|terri'),
     ('22222222-2222-2222-2222-222222222222', now(), now(), 'Alex', 'Janssen', NULL, 'seed|alex')
 ON CONFLICT (id) DO NOTHING;
 
