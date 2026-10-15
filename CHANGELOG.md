@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.4](https://github.com/terridb/chorequest-backend/compare/v0.3.3...v0.3.4) (2026-10-15)
+
+
+### Bug Fixes
+
+* loaded open assignments with their task, member and completion in one query instead of one per assignment ([25363b0](https://github.com/terridb/chorequest-backend/commit/25363b060b5fd5607cb2927fa6ab4519534cef08))
+
+
+### Documentation
+
+* added readme with setup, features and a demo household script ([8f6c565](https://github.com/terridb/chorequest-backend/commit/8f6c565110cf55cfef2eddc8a49c6aa6e1c4e534))
+
 ## [0.3.3](https://github.com/terridb/chorequest-backend/compare/v0.3.2...v0.3.3) (2026-10-13)
 
 
