@@ -4,6 +4,7 @@ import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.Task;
 import com.terridb.chorequest.entities.TaskAssignment;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public interface TaskAssignmentRepository extends JpaRepository<TaskAssignment, 
 
     Set<TaskAssignment> findByHouseholdMemberOrderByDueDateDesc(HouseholdMember householdMember);
 
+    @EntityGraph(attributePaths = {"task", "householdMember.user", "taskCompletion"})
     Set<TaskAssignment> findByTask_HouseholdAndTaskCompletionIsNullOrderByDueDateAsc(Household household);
 
     boolean existsByTaskAndTaskCompletionIsNull(Task task);
