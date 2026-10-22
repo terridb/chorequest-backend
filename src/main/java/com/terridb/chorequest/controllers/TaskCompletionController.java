@@ -43,9 +43,16 @@ public class TaskCompletionController {
         return ResponseEntity.created(location).body(dto);
     }
 
-    @GetMapping("goals/{id}/completions")
+    @GetMapping("/goals/{id}/completions")
     public ResponseEntity<List<TaskCompletionSimpleResponseDto>> getCompletionsForGoal(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(taskCompletionService.getCompletionsForGoal(id, jwt.getSubject()));
+    }
+
+    @GetMapping("/tasks/{id}/completions")
+    public ResponseEntity<List<TaskCompletionSimpleResponseDto>> getCompletionHistoryForTask(@PathVariable UUID id,
+                                                                                             @RequestParam(defaultValue = "10") int limit,
+                                                                                             @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(taskCompletionService.getCompletionHistoryForTask(id, limit, jwt.getSubject()));
     }
 }
 
