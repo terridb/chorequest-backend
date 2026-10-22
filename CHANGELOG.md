@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/terridb/chorequest-backend/compare/v0.3.4...v0.4.0) (2026-10-22)
+
+
+### Features
+
+* added an endpoint to get the completion history of a task with … ([df8de6a](https://github.com/terridb/chorequest-backend/commit/df8de6a7d1fb009867728f0c947ca377d182931d))
+* added an endpoint to get the completion history of a task with an adjustable limit ([223869b](https://github.com/terridb/chorequest-backend/commit/223869bca115d2cad3fd8fb19021f862d1fbddc6))
+
 ## [0.3.4](https://github.com/terridb/chorequest-backend/compare/v0.3.3...v0.3.4) (2026-10-15)
 
 
