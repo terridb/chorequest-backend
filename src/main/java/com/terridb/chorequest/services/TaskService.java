@@ -136,7 +136,7 @@ public class TaskService {
         task.setResponsibleMember(member);
     }
 
-    private Task getTask(UUID id) {
+    public Task getTask(UUID id) {
         return taskRepository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Task with id " + id + " not found"));
 

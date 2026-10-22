@@ -49,6 +49,7 @@ public class TaskCompletionMapper {
         responseDto.setId(taskCompletion.getId());
         responseDto.setMember(householdMemberMapper.toDto(taskCompletion.getCompletedBy()));
         responseDto.setRewardedPoints(taskCompletion.getRewardedPoints());
+        responseDto.setCompletedAt(taskCompletion.getCompletedAt());
 
         return responseDto;
     }

@@ -4,6 +4,7 @@ import com.terridb.chorequest.dtos.householdMembers.HouseholdMemberResponseDto;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
@@ -12,4 +13,5 @@ public class TaskCompletionSimpleResponseDto {
     private UUID id;
     private HouseholdMemberResponseDto member;
     private int rewardedPoints;
+    private LocalDateTime completedAt;
 }
