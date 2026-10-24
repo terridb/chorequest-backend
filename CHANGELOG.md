@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.0](https://github.com/terridb/chorequest-backend/compare/v0.4.0...v0.5.0) (2026-10-24)
+
+
+### Features
+
+* added endpoints to upload, get and delete a custom profile pict… ([fea5754](https://github.com/terridb/chorequest-backend/commit/fea575432114b39ec05bd43791fda9ac108f487a))
+* added endpoints to upload, get and delete a custom profile picture that overrides the auth0 picture ([401801e](https://github.com/terridb/chorequest-backend/commit/401801ef99bb4bf7e668de85990c952d0f279a39))
+
 ## [0.4.0](https://github.com/terridb/chorequest-backend/compare/v0.3.4...v0.4.0) (2026-10-22)
 
 
