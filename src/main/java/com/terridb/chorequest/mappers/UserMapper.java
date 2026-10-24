@@ -7,6 +7,7 @@ import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.User;
 import org.springframework.stereotype.Component;
 
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -19,9 +20,6 @@ public class UserMapper {
         if (patchDto.getLastName() != null) {
             user.setLastName(patchDto.getLastName());
         }
-        if (patchDto.getAvatarUrl() != null) {
-            user.setAvatarUrl(patchDto.getAvatarUrl());
-        }
 
         return user;
     }
@@ -32,7 +30,7 @@ public class UserMapper {
         responseDto.setId(user.getId());
         responseDto.setFirstName(user.getFirstName());
         responseDto.setLastName(user.getLastName());
-        responseDto.setAvatarUrl(user.getAvatarUrl());
+        responseDto.setAvatarUrl(resolveAvatarUrl(user));
         responseDto.setHouseholdIds(user.getMemberships().stream()
                 .filter(HouseholdMember::isActive)
                 .map(householdMember -> householdMember.getHousehold().getId())
@@ -56,7 +54,7 @@ public class UserMapper {
 
         responseDto.setId(user.getId());
         responseDto.setFirstName(user.getFirstName());
-        responseDto.setAvatarUrl(user.getAvatarUrl());
+        responseDto.setAvatarUrl(resolveAvatarUrl(user));
 
         return responseDto;
     }
@@ -65,5 +63,13 @@ public class UserMapper {
         return users.stream()
                 .map(this::toSimpleDto)
                 .collect(Collectors.toList());
+    }
+
+    private String resolveAvatarUrl(User user) {
+        if (user.getCustomAvatarUpdatedAt() != null) {
+            long version = user.getCustomAvatarUpdatedAt().toEpochSecond(ZoneOffset.UTC);
+            return "/api/users/" + user.getId() + "/avatar?v=" + version;
+        }
+        return user.getAvatarUrl();
     }
 }

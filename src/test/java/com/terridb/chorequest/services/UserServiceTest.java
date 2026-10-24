@@ -12,6 +12,7 @@ import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.UserMapper;
 import com.terridb.chorequest.repositories.HouseholdInviteRepository;
 import com.terridb.chorequest.repositories.HouseholdMemberRepository;
+import com.terridb.chorequest.repositories.UserAvatarRepository;
 import com.terridb.chorequest.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -53,11 +54,14 @@ class UserServiceTest {
     @Mock
     private Auth0ManagementClient auth0ManagementClient;
 
+    @Mock
+    private UserAvatarRepository userAvatarRepository;
+
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, new UserMapper(), householdMemberRepository, householdInviteRepository, auth0ManagementClient);
+        userService = new UserService(userRepository, new UserMapper(), householdMemberRepository, householdInviteRepository, auth0ManagementClient, userAvatarRepository);
     }
 
     @Test

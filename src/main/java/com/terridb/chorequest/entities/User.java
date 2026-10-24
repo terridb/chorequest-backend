@@ -8,6 +8,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -29,6 +30,8 @@ public class User extends BaseEntity {
 
     @Column(length = 1024)
     private String avatarUrl;
+
+    private LocalDateTime customAvatarUpdatedAt;
 
     @OneToMany(mappedBy = "user")
     private Set<HouseholdMember> memberships = new HashSet<>();
