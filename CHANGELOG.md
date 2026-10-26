@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.1](https://github.com/terridb/chorequest-backend/compare/v0.5.0...v0.5.1) (2026-10-26)
+
+
+### Bug Fixes
+
+* removed the assignment scheduler and shrunk the connection pool … ([fbb05d1](https://github.com/terridb/chorequest-backend/commit/fbb05d1389b14fa41bd6502150deaba7725808bc))
+* removed the assignment scheduler and shrunk the connection pool so the database can suspend when idle ([2231ef2](https://github.com/terridb/chorequest-backend/commit/2231ef2fdcc4e3a01c2f7e7249bdaa9cbc870f5c))
+
 ## [0.5.0](https://github.com/terridb/chorequest-backend/compare/v0.4.0...v0.5.0) (2026-10-24)
 
 
