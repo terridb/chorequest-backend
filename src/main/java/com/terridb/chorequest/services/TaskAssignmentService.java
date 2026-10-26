@@ -15,9 +15,11 @@ import com.terridb.chorequest.repositories.HouseholdMemberRepository;
 import com.terridb.chorequest.repositories.TaskAssignmentRepository;
 import com.terridb.chorequest.repositories.TaskRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.List;
 import java.util.Optional;
@@ -72,7 +74,7 @@ public class TaskAssignmentService {
         Household household = householdService.getHousehold(householdId);
         householdService.requireMembership(household, sub);
 
-        Set<TaskAssignment> assignments = taskAssignmentRepository.findByTask_HouseholdAndTaskCompletionIsNullOrderByDueDateAsc(household);
+        Set<TaskAssignment> assignments = taskAssignmentRepository.findByTask_HouseholdAndTaskCompletionIsNullAndSkippedAtIsNullOrderByDueDateAsc(household);
 
         return taskAssignmentMapper.toDto(assignments.stream().toList());
     }
@@ -85,6 +87,10 @@ public class TaskAssignmentService {
 
         if (assignment.getTaskCompletion() != null) {
             throw new BadRequestException("Cannot reassign a completed task assignment");
+        }
+
+        if (assignment.getSkippedAt() != null) {
+            throw new BadRequestException("Cannot reassign a skipped task assignment");
         }
 
         if (!member.getHousehold().getId().equals(assignment.getTask().getHousehold().getId())) {
@@ -107,6 +113,10 @@ public class TaskAssignmentService {
             throw new BadRequestException("Cannot delete a completed task assignment");
         }
 
+        if (assignment.getSkippedAt() != null) {
+            throw new BadRequestException("Cannot delete a skipped task assignment");
+        }
+
         taskAssignmentRepository.delete(assignment);
     }
 
@@ -126,12 +136,12 @@ public class TaskAssignmentService {
         return createAssignment(task, member, calculateTaskDueDate(task));
     }
 
-    public TaskAssignmentResponseDto createInitialAssignment(Task task) {
-        return createAssignment(task, resolveAssignee(task), calculateInitialDueDate(task));
+    public void createInitialAssignment(Task task) {
+        createAssignment(task, resolveAssignee(task), calculateInitialDueDate(task));
     }
 
     public void rescheduleOpenAssignments(Task task) {
-        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByTaskAndTaskCompletionIsNull(task);
+        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByTaskAndTaskCompletionIsNullAndSkippedAtIsNull(task);
         LocalDate dueDate = calculateInitialDueDate(task);
 
         // A task switched from ONCE or AS_NEEDED to a recurring frequency may have nothing open yet
@@ -155,27 +165,27 @@ public class TaskAssignmentService {
             return;
         }
 
-        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByTaskAndTaskCompletionIsNull(task);
+        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByTaskAndTaskCompletionIsNullAndSkippedAtIsNull(task);
         for (TaskAssignment assignment : openAssignments) {
             assignment.setHouseholdMember(responsibleMember);
         }
         taskAssignmentRepository.saveAll(openAssignments);
     }
 
-    public void createNextAssignment(TaskAssignment completedAssignment) {
+    public TaskAssignmentResponseDto createNextAssignment(TaskAssignment completedAssignment) {
         Task task = completedAssignment.getTask();
         if (task.getFrequency() == Frequency.ONCE) {
-            return;
+            return null;
         }
 
-        createAssignment(task, resolveAssignee(task), calculateNextDueDate(task, completedAssignment.getDueDate()));
+        return createAssignment(task, resolveAssignee(task), calculateNextDueDate(task, completedAssignment.getDueDate()));
     }
 
     public void generateDueAssignments() {
         List<Task> tasks = taskRepository.findByFrequencyNotIn(List.of(Frequency.AS_NEEDED, Frequency.ONCE));
 
         for (Task task : tasks) {
-            if (taskAssignmentRepository.existsByTaskAndTaskCompletionIsNull(task)) {
+            if (taskAssignmentRepository.existsByTaskAndTaskCompletionIsNullAndSkippedAtIsNull(task)) {
                 continue;
             }
 
@@ -190,7 +200,7 @@ public class TaskAssignmentService {
 
     public void reassignOpenAssignments(HouseholdMember leavingMember) {
         List<HouseholdMember> members = householdMemberRepository.findByHouseholdAndLeftAtIsNullOrderByCreatedAtAsc(leavingMember.getHousehold());
-        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByHouseholdMemberAndTaskCompletionIsNull(leavingMember);
+        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByHouseholdMemberAndTaskCompletionIsNullAndSkippedAtIsNull(leavingMember);
 
         if (members.size() <= 1) {
             taskAssignmentRepository.deleteAll(openAssignments);
@@ -205,6 +215,31 @@ public class TaskAssignmentService {
             assignment.setHouseholdMember(hasOtherSoloOwner ? owner : nextMember);
         }
         taskAssignmentRepository.saveAll(openAssignments);
+    }
+
+    @Transactional
+    public TaskAssignmentResponseDto skipAssignment(UUID id, String sub) {
+        TaskAssignment assignment = getAssignment(id);
+        HouseholdMember skipper = householdService.requireMembership(assignment.getTask().getHousehold(), sub);
+
+        if (assignment.getTaskCompletion() != null) {
+            throw new BadRequestException("Assignment has already been completed");
+        }
+
+        if (assignment.getSkippedAt() != null) {
+            throw new BadRequestException("Assignment has already been skipped");
+        }
+
+        if (!isRecurring(assignment.getTask())) {
+            throw new BadRequestException("Task is not recurring and can't be skipped");
+        }
+
+        assignment.setSkippedAt(LocalDateTime.now(clock));
+        assignment.setSkippedBy(skipper);
+        taskAssignmentRepository.save(assignment);
+
+        Task task = assignment.getTask();
+        return createAssignment(task, assignment.getHouseholdMember(), calculateNextDueDate(task, assignment.getDueDate()));
     }
 
     private boolean isRecurring(Task task) {

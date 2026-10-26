@@ -18,13 +18,13 @@ public interface TaskAssignmentRepository extends JpaRepository<TaskAssignment, 
     Set<TaskAssignment> findByHouseholdMemberOrderByDueDateDesc(HouseholdMember householdMember);
 
     @EntityGraph(attributePaths = {"task", "householdMember.user", "taskCompletion"})
-    Set<TaskAssignment> findByTask_HouseholdAndTaskCompletionIsNullOrderByDueDateAsc(Household household);
+    Set<TaskAssignment> findByTask_HouseholdAndTaskCompletionIsNullAndSkippedAtIsNullOrderByDueDateAsc(Household household);
 
-    boolean existsByTaskAndTaskCompletionIsNull(Task task);
+    boolean existsByTaskAndTaskCompletionIsNullAndSkippedAtIsNull(Task task);
 
-    List<TaskAssignment> findByHouseholdMemberAndTaskCompletionIsNull(HouseholdMember householdMember);
+    List<TaskAssignment> findByHouseholdMemberAndTaskCompletionIsNullAndSkippedAtIsNull(HouseholdMember householdMember);
 
-    List<TaskAssignment> findByTaskAndTaskCompletionIsNull(Task task);
+    List<TaskAssignment> findByTaskAndTaskCompletionIsNullAndSkippedAtIsNull(Task task);
 
     Optional<TaskAssignment> findFirstByTaskOrderByCreatedAtDesc(Task task);
 }

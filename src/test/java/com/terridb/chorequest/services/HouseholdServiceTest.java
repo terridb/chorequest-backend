@@ -58,13 +58,14 @@ class HouseholdServiceTest {
     }
 
     @Test
-    void requireMembership_passes_whenUserIsMember() {
+    void requireMembership_returnsMembership_whenUserIsMember() {
         Household household = new Household();
         User member = userWithSub(MEMBER_SUB);
+        HouseholdMember membership = new HouseholdMember();
         when(userService.getUserBySub(MEMBER_SUB)).thenReturn(member);
-        when(householdMemberRepository.existsByHouseholdAndUserAndLeftAtIsNull(household, member)).thenReturn(true);
+        when(householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, member)).thenReturn(Optional.of(membership));
 
-        householdService.requireMembership(household, MEMBER_SUB);
+        assertThat(householdService.requireMembership(household, MEMBER_SUB)).isEqualTo(membership);
     }
 
     @Test
@@ -72,7 +73,7 @@ class HouseholdServiceTest {
         Household household = new Household();
         User outsider = userWithSub(OUTSIDER_SUB);
         when(userService.getUserBySub(OUTSIDER_SUB)).thenReturn(outsider);
-        when(householdMemberRepository.existsByHouseholdAndUserAndLeftAtIsNull(household, outsider)).thenReturn(false);
+        when(householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, outsider)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> householdService.requireMembership(household, OUTSIDER_SUB))
                 .isInstanceOf(AccessDeniedException.class);
@@ -139,7 +140,7 @@ class HouseholdServiceTest {
         User outsider = userWithSub(OUTSIDER_SUB);
         when(householdRepository.findById(id)).thenReturn(Optional.of(household));
         when(userService.getUserBySub(OUTSIDER_SUB)).thenReturn(outsider);
-        when(householdMemberRepository.existsByHouseholdAndUserAndLeftAtIsNull(household, outsider)).thenReturn(false);
+        when(householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, outsider)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> householdService.getHouseholdById(id, OUTSIDER_SUB))
                 .isInstanceOf(AccessDeniedException.class);

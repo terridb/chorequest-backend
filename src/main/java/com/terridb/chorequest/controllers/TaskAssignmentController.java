@@ -64,4 +64,9 @@ public class TaskAssignmentController {
         taskAssignmentService.deleteAssignment(id, jwt.getSubject());
         return ResponseEntity.noContent().build();
     }
+
+    @PostMapping("/assignments/{id}/skip")
+    public ResponseEntity<TaskAssignmentResponseDto> skipAssignment(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(taskAssignmentService.skipAssignment(id, jwt.getSubject()));
+    }
 }

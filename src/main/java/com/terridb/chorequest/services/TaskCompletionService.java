@@ -51,6 +51,10 @@ public class TaskCompletionService {
             throw new BadRequestException("Assignment has already been completed");
         }
 
+        if (assignment.getSkippedAt() != null) {
+            throw new BadRequestException("Assignment has been skipped");
+        }
+
         if (!assignment.getTask().getHousehold().getId().equals(member.getHousehold().getId())) {
             throw new BadRequestException("Household member does not belong to this task's household");
         }

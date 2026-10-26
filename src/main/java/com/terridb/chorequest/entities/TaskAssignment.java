@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -22,6 +23,12 @@ public class TaskAssignment extends BaseEntity {
     private Task task;
 
     private LocalDate dueDate;
+
+    private LocalDateTime skippedAt;
+
+    @ManyToOne
+    @JoinColumn(name = "skipped_by_id")
+    private HouseholdMember skippedBy;
 
     @OneToOne(mappedBy = "taskAssignment", cascade = CascadeType.ALL, orphanRemoval = true)
     private TaskCompletion taskCompletion;

@@ -24,6 +24,10 @@ public class TaskAssignmentMapper {
         responseDto.setTask(taskMapper.toDto(taskAssignment.getTask()));
         responseDto.setUser(userMapper.toSimpleDto(taskAssignment.getHouseholdMember().getUser()));
         responseDto.setDueDate(taskAssignment.getDueDate());
+        responseDto.setSkippedAt(taskAssignment.getSkippedAt());
+        if (taskAssignment.getSkippedBy() != null) {
+            responseDto.setSkippedBy(userMapper.toSimpleDto(taskAssignment.getSkippedBy().getUser()));
+        }
 
         return responseDto;
     }
