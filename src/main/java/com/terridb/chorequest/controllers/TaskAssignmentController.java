@@ -2,6 +2,7 @@ package com.terridb.chorequest.controllers;
 
 import com.terridb.chorequest.dtos.taskAssignments.TaskAssignmentRequestDto;
 import com.terridb.chorequest.dtos.taskAssignments.TaskAssignmentResponseDto;
+import com.terridb.chorequest.dtos.taskAssignments.TaskHistoryEntryDto;
 import com.terridb.chorequest.services.TaskAssignmentService;
 import com.terridb.chorequest.utils.UrlUtil;
 import jakarta.validation.Valid;
@@ -32,6 +33,13 @@ public class TaskAssignmentController {
     @GetMapping("/tasks/{id}/assignments")
     public ResponseEntity<List<TaskAssignmentResponseDto>> getAssignmentsForTask(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(taskAssignmentService.getAssignmentsForTask(id, jwt.getSubject()));
+    }
+
+    @GetMapping("/tasks/{id}/history")
+    public ResponseEntity<List<TaskHistoryEntryDto>> getHistoryForTask(@PathVariable UUID id,
+                                                                       @RequestParam(defaultValue = "10") int limit,
+                                                                       @AuthenticationPrincipal Jwt jwt) {
+        return ResponseEntity.ok(taskAssignmentService.getHistoryForTask(id, limit, jwt.getSubject()));
     }
 
     @GetMapping("/members/{id}/assignments")

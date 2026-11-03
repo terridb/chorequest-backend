@@ -4,13 +4,13 @@ import com.terridb.chorequest.dtos.taskCompletions.TaskCompletionRequestDto;
 import com.terridb.chorequest.dtos.taskCompletions.TaskCompletionResponseDto;
 import com.terridb.chorequest.dtos.taskCompletions.TaskCompletionSimpleResponseDto;
 import com.terridb.chorequest.entities.*;
+import com.terridb.chorequest.entities.enums.AssignmentStatus;
 import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.TaskCompletionMapper;
 import com.terridb.chorequest.repositories.HouseholdMemberRepository;
 import com.terridb.chorequest.repositories.TaskAssignmentRepository;
 import com.terridb.chorequest.repositories.TaskCompletionRepository;
-import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,9 +26,8 @@ public class TaskCompletionService {
     private final GoalService goalService;
     private final HouseholdService householdService;
     private final TaskAssignmentService taskAssignmentService;
-    private final TaskService taskService;
 
-    public TaskCompletionService(TaskAssignmentRepository taskAssignmentRepository, HouseholdMemberRepository householdMemberRepository, TaskCompletionRepository taskCompletionRepository, TaskCompletionMapper taskCompletionMapper, GoalService goalService, HouseholdService householdService, TaskAssignmentService taskAssignmentService, TaskService taskService) {
+    public TaskCompletionService(TaskAssignmentRepository taskAssignmentRepository, HouseholdMemberRepository householdMemberRepository, TaskCompletionRepository taskCompletionRepository, TaskCompletionMapper taskCompletionMapper, GoalService goalService, HouseholdService householdService, TaskAssignmentService taskAssignmentService) {
         this.taskAssignmentRepository = taskAssignmentRepository;
         this.householdMemberRepository = householdMemberRepository;
         this.taskCompletionRepository = taskCompletionRepository;
@@ -36,7 +35,6 @@ public class TaskCompletionService {
         this.goalService = goalService;
         this.householdService = householdService;
         this.taskAssignmentService = taskAssignmentService;
-        this.taskService = taskService;
     }
 
     @Transactional
@@ -47,11 +45,11 @@ public class TaskCompletionService {
 
         HouseholdMember member = getMember(input.getCompletedByMemberId());
 
-        if (assignment.getTaskCompletion() != null) {
+        if (assignment.getStatus() == AssignmentStatus.COMPLETED) {
             throw new BadRequestException("Assignment has already been completed");
         }
 
-        if (assignment.getSkippedAt() != null) {
+        if (assignment.getStatus() == AssignmentStatus.SKIPPED) {
             throw new BadRequestException("Assignment has been skipped");
         }
 
@@ -78,6 +76,8 @@ public class TaskCompletionService {
         householdMemberRepository.save(member);
 
         TaskCompletion savedCompletion = taskCompletionRepository.save(completion);
+        assignment.setStatus(AssignmentStatus.COMPLETED);
+        taskAssignmentRepository.save(assignment);
         taskAssignmentService.createNextAssignment(assignment);
 
         return taskCompletionMapper.toDto(savedCompletion);
@@ -108,18 +108,6 @@ public class TaskCompletionService {
         householdService.requireMembership(goal.getHousehold(), sub);
 
         List<TaskCompletion> completions = taskCompletionRepository.findByGoalOrderByRewardedPointsDesc(goal);
-        return taskCompletionMapper.toSimpleDto(completions);
-    }
-
-    public List<TaskCompletionSimpleResponseDto> getCompletionHistoryForTask(UUID taskId, int limit, String sub) {
-        if (limit < 1 || limit > 50) {
-            throw new BadRequestException("Limit must be between 1 and 50");
-        }
-
-        Task task = taskService.getTask(taskId);
-        householdService.requireMembership(task.getHousehold(), sub);
-
-        List<TaskCompletion> completions = taskCompletionRepository.findByTaskAssignmentTaskOrderByCompletedAtDesc(task, Limit.of(limit));
         return taskCompletionMapper.toSimpleDto(completions);
     }
 

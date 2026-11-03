@@ -106,11 +106,11 @@ WITH history(task_suffix, member_suffix, days_ago) AS (
         ('c009', 'a004', 6)
 ),
 completed AS (
-    INSERT INTO task_assignments (id, created_at, updated_at, household_member_id, task_id, due_date)
+    INSERT INTO task_assignments (id, created_at, updated_at, household_member_id, task_id, due_date, status)
     SELECT gen_random_uuid(), :ts - make_interval(days => days_ago + 1), :ts,
            ('dede0000-0000-0000-0000-00000000' || member_suffix)::uuid,
            ('dede0000-0000-0000-0000-00000000' || task_suffix)::uuid,
-           CURRENT_DATE - days_ago
+           CURRENT_DATE - days_ago, 'COMPLETED'
     FROM history
     RETURNING id, task_id, household_member_id, due_date
 )

@@ -1,5 +1,6 @@
 package com.terridb.chorequest.entities;
 
+import com.terridb.chorequest.entities.enums.AssignmentStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,10 @@ public class TaskAssignment extends BaseEntity {
     private Task task;
 
     private LocalDate dueDate;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private AssignmentStatus status = AssignmentStatus.OPEN;
 
     private LocalDateTime skippedAt;
 

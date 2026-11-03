@@ -5,6 +5,7 @@ import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.Task;
 import com.terridb.chorequest.entities.TaskAssignment;
+import com.terridb.chorequest.entities.enums.AssignmentStatus;
 import com.terridb.chorequest.entities.enums.AssignmentStrategy;
 import com.terridb.chorequest.entities.enums.Frequency;
 import com.terridb.chorequest.mappers.TaskAssignmentMapper;
@@ -70,7 +71,7 @@ class TaskAssignmentServiceTest {
         TaskAssignment assignment = openAssignment(task(AssignmentStrategy.ROTATING, null), leaving);
 
         when(householdMemberRepository.findByHouseholdAndLeftAtIsNullOrderByCreatedAtAsc(household)).thenReturn(List.of(first, leaving, last));
-        when(taskAssignmentRepository.findByHouseholdMemberAndTaskCompletionIsNullAndSkippedAtIsNull(leaving)).thenReturn(List.of(assignment));
+        when(taskAssignmentRepository.findByHouseholdMemberAndStatus(leaving, AssignmentStatus.OPEN)).thenReturn(List.of(assignment));
 
         taskAssignmentService.reassignOpenAssignments(leaving);
 
@@ -86,7 +87,7 @@ class TaskAssignmentServiceTest {
         TaskAssignment assignment = openAssignment(task(AssignmentStrategy.ROTATING, null), leaving);
 
         when(householdMemberRepository.findByHouseholdAndLeftAtIsNullOrderByCreatedAtAsc(household)).thenReturn(List.of(first, leaving));
-        when(taskAssignmentRepository.findByHouseholdMemberAndTaskCompletionIsNullAndSkippedAtIsNull(leaving)).thenReturn(List.of(assignment));
+        when(taskAssignmentRepository.findByHouseholdMemberAndStatus(leaving, AssignmentStatus.OPEN)).thenReturn(List.of(assignment));
 
         taskAssignmentService.reassignOpenAssignments(leaving);
 
@@ -102,7 +103,7 @@ class TaskAssignmentServiceTest {
         TaskAssignment assignment = openAssignment(task(AssignmentStrategy.SOLO, owner), leaving);
 
         when(householdMemberRepository.findByHouseholdAndLeftAtIsNullOrderByCreatedAtAsc(household)).thenReturn(List.of(owner, leaving, last));
-        when(taskAssignmentRepository.findByHouseholdMemberAndTaskCompletionIsNullAndSkippedAtIsNull(leaving)).thenReturn(List.of(assignment));
+        when(taskAssignmentRepository.findByHouseholdMemberAndStatus(leaving, AssignmentStatus.OPEN)).thenReturn(List.of(assignment));
 
         taskAssignmentService.reassignOpenAssignments(leaving);
 
@@ -116,7 +117,7 @@ class TaskAssignmentServiceTest {
         TaskAssignment assignment = openAssignment(task(AssignmentStrategy.ROTATING, null), leaving);
 
         when(householdMemberRepository.findByHouseholdAndLeftAtIsNullOrderByCreatedAtAsc(household)).thenReturn(List.of(leaving));
-        when(taskAssignmentRepository.findByHouseholdMemberAndTaskCompletionIsNullAndSkippedAtIsNull(leaving)).thenReturn(List.of(assignment));
+        when(taskAssignmentRepository.findByHouseholdMemberAndStatus(leaving, AssignmentStatus.OPEN)).thenReturn(List.of(assignment));
 
         taskAssignmentService.reassignOpenAssignments(leaving);
 
@@ -232,7 +233,7 @@ class TaskAssignmentServiceTest {
         TaskAssignment assignment = openAssignment(task, task.getResponsibleMember());
         assignment.setDueDate(LocalDate.of(2026, 10, 12));
 
-        when(taskAssignmentRepository.findByTaskAndTaskCompletionIsNullAndSkippedAtIsNull(task)).thenReturn(List.of(assignment));
+        when(taskAssignmentRepository.findByTaskAndStatus(task, AssignmentStatus.OPEN)).thenReturn(List.of(assignment));
 
         taskAssignmentService.rescheduleOpenAssignments(task);
 
@@ -244,7 +245,7 @@ class TaskAssignmentServiceTest {
     void rescheduleOpenAssignments_createsAssignment_whenRecurringTaskHasNoneOpen() {
         Task task = dailySoloTaskStarting(LocalDate.of(2026, 10, 20), "UTC");
 
-        when(taskAssignmentRepository.findByTaskAndTaskCompletionIsNullAndSkippedAtIsNull(task)).thenReturn(List.of());
+        when(taskAssignmentRepository.findByTaskAndStatus(task, AssignmentStatus.OPEN)).thenReturn(List.of());
         when(taskAssignmentRepository.save(any(TaskAssignment.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         taskAssignmentService.rescheduleOpenAssignments(task);
@@ -260,7 +261,7 @@ class TaskAssignmentServiceTest {
         Task task = dailySoloTaskStarting(LocalDate.of(2026, 10, 20), "UTC");
         task.setFrequency(Frequency.ONCE);
 
-        when(taskAssignmentRepository.findByTaskAndTaskCompletionIsNullAndSkippedAtIsNull(task)).thenReturn(List.of());
+        when(taskAssignmentRepository.findByTaskAndStatus(task, AssignmentStatus.OPEN)).thenReturn(List.of());
 
         taskAssignmentService.rescheduleOpenAssignments(task);
 
@@ -275,7 +276,7 @@ class TaskAssignmentServiceTest {
         Task task = task(AssignmentStrategy.SOLO, newOwner);
         TaskAssignment assignment = openAssignment(task, previous);
 
-        when(taskAssignmentRepository.findByTaskAndTaskCompletionIsNullAndSkippedAtIsNull(task)).thenReturn(List.of(assignment));
+        when(taskAssignmentRepository.findByTaskAndStatus(task, AssignmentStatus.OPEN)).thenReturn(List.of(assignment));
 
         taskAssignmentService.reassignOpenAssignmentsToResponsibleMember(task);
 
