@@ -7,13 +7,16 @@ updates:
       day: monday
       time: "01:00"
     commit-message:
-      prefix: chore
+      prefix: fix
+      prefix-development: chore
       include: scope
     groups:
-      minor-and-patch:
-        update-types:
-          - minor
-          - patch
+      production:
+        dependency-type: production
+        update-types: [minor, patch]
+      development:
+        dependency-type: development
+        update-types: [minor, patch]
 
   - package-ecosystem: docker
     directory: /
@@ -22,7 +25,7 @@ updates:
       day: monday
       time: "01:30"
     commit-message:
-      prefix: chore
+      prefix: fix
       include: scope
 
   - package-ecosystem: github-actions
