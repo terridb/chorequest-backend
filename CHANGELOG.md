@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/terridb/chorequest-backend/compare/v0.5.1...v0.5.2) (2026-11-09)
+
+
+### Bug Fixes
+
+* **deps:** update dependencies ([d4546a0](https://github.com/terridb/chorequest-backend/commit/d4546a05ed01cdab46ab0836415829d0c0608ce6))
+
 ## [0.5.1](https://github.com/terridb/chorequest-backend/compare/v0.5.0...v0.5.1) (2026-10-26)
 
 
