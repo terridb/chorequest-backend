@@ -101,13 +101,7 @@ public class TaskAssignmentService {
 
         HouseholdMember member = getMember(input.getHouseholdMemberId());
 
-        if (assignment.getStatus() == AssignmentStatus.COMPLETED) {
-            throw new BadRequestException("Cannot reassign a completed task assignment");
-        }
-
-        if (assignment.getStatus() == AssignmentStatus.SKIPPED) {
-            throw new BadRequestException("Cannot reassign a skipped task assignment");
-        }
+        assignment.requireOpen();
 
         if (!member.getHousehold().getId().equals(assignment.getTask().getHousehold().getId())) {
             throw new BadRequestException("Household member does not belong to this task's household");
@@ -125,14 +119,7 @@ public class TaskAssignmentService {
         TaskAssignment assignment = getAssignment(id);
         householdService.requireMembership(assignment.getTask().getHousehold(), sub);
 
-        if (assignment.getStatus() == AssignmentStatus.COMPLETED) {
-            throw new BadRequestException("Cannot delete a completed task assignment");
-        }
-
-        if (assignment.getStatus() == AssignmentStatus.SKIPPED) {
-            throw new BadRequestException("Cannot delete a skipped task assignment");
-        }
-
+        assignment.requireOpen();
         taskAssignmentRepository.delete(assignment);
     }
 
@@ -238,25 +225,15 @@ public class TaskAssignmentService {
         TaskAssignment assignment = getAssignment(id);
         HouseholdMember skipper = householdService.requireMembership(assignment.getTask().getHousehold(), sub);
 
-        if (assignment.getStatus() == AssignmentStatus.COMPLETED) {
-            throw new BadRequestException("Assignment has already been completed");
-        }
-
-        if (assignment.getStatus() == AssignmentStatus.SKIPPED) {
-            throw new BadRequestException("Assignment has already been skipped");
-        }
-
         if (!isRecurring(assignment.getTask())) {
             throw new BadRequestException("Task is not recurring and can't be skipped");
         }
 
-        assignment.setStatus(AssignmentStatus.SKIPPED);
-        assignment.setSkippedAt(LocalDateTime.now(clock));
-        assignment.setSkippedBy(skipper);
+        assignment.skip(skipper, LocalDateTime.now(clock));
         taskAssignmentRepository.save(assignment);
 
         Task task = assignment.getTask();
-        return createAssignment(task, assignment.getHouseholdMember(), calculateNextDueDate(task, assignment.getDueDate()));
+        return createAssignment(task, assignment.getHouseholdMember(), calculateDueDateAfterSkip(task, assignment.getDueDate()));
     }
 
     private boolean isRecurring(Task task) {
@@ -328,6 +305,20 @@ public class TaskAssignmentService {
 
         Period period = periodFor(task.getFrequency());
         while (!dueDate.isAfter(completedDueDate)) {
+            dueDate = dueDate.plus(period);
+        }
+        return dueDate;
+    }
+
+    private LocalDate calculateDueDateAfterSkip(Task task, LocalDate skippedDueDate) {
+        if (skippedDueDate == null) {
+            return calculateTaskDueDate(task);
+        }
+
+        Period period = periodFor(task.getFrequency());
+        LocalDate today = today(task);
+        LocalDate dueDate = skippedDueDate.plus(period);
+        while (dueDate.isBefore(today)) {
             dueDate = dueDate.plus(period);
         }
         return dueDate;

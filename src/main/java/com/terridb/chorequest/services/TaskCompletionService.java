@@ -4,7 +4,6 @@ import com.terridb.chorequest.dtos.taskCompletions.TaskCompletionRequestDto;
 import com.terridb.chorequest.dtos.taskCompletions.TaskCompletionResponseDto;
 import com.terridb.chorequest.dtos.taskCompletions.TaskCompletionSimpleResponseDto;
 import com.terridb.chorequest.entities.*;
-import com.terridb.chorequest.entities.enums.AssignmentStatus;
 import com.terridb.chorequest.exceptions.BadRequestException;
 import com.terridb.chorequest.exceptions.RecordNotFoundException;
 import com.terridb.chorequest.mappers.TaskCompletionMapper;
@@ -45,13 +44,7 @@ public class TaskCompletionService {
 
         HouseholdMember member = getMember(input.getCompletedByMemberId());
 
-        if (assignment.getStatus() == AssignmentStatus.COMPLETED) {
-            throw new BadRequestException("Assignment has already been completed");
-        }
-
-        if (assignment.getStatus() == AssignmentStatus.SKIPPED) {
-            throw new BadRequestException("Assignment has been skipped");
-        }
+        assignment.requireOpen();
 
         if (!assignment.getTask().getHousehold().getId().equals(member.getHousehold().getId())) {
             throw new BadRequestException("Household member does not belong to this task's household");
@@ -76,7 +69,7 @@ public class TaskCompletionService {
         householdMemberRepository.save(member);
 
         TaskCompletion savedCompletion = taskCompletionRepository.save(completion);
-        assignment.setStatus(AssignmentStatus.COMPLETED);
+        assignment.complete();
         taskAssignmentRepository.save(assignment);
         taskAssignmentService.createNextAssignment(assignment);
 
