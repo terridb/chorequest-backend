@@ -184,23 +184,6 @@ public class TaskAssignmentService {
         return createAssignment(task, resolveAssignee(task), calculateNextDueDate(task, completedAssignment.getDueDate()));
     }
 
-    public void generateDueAssignments() {
-        List<Task> tasks = taskRepository.findByFrequencyNotIn(List.of(Frequency.AS_NEEDED, Frequency.ONCE));
-
-        for (Task task : tasks) {
-            if (taskAssignmentRepository.existsByTaskAndStatus(task, AssignmentStatus.OPEN)) {
-                continue;
-            }
-
-            LocalDate dueDate = calculateTaskDueDate(task);
-            if (dueDate.isAfter(today(task))) {
-                continue;
-            }
-
-            createAssignment(task, resolveAssignee(task), dueDate);
-        }
-    }
-
     public void reassignOpenAssignments(HouseholdMember leavingMember) {
         List<HouseholdMember> members = householdMemberRepository.findByHouseholdAndLeftAtIsNullOrderByCreatedAtAsc(leavingMember.getHousehold());
         List<TaskAssignment> openAssignments = taskAssignmentRepository.findByHouseholdMemberAndStatus(leavingMember, AssignmentStatus.OPEN);

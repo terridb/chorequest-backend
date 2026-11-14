@@ -23,9 +23,7 @@ public interface TaskAssignmentRepository extends JpaRepository<TaskAssignment, 
     @EntityGraph(attributePaths = {"task", "householdMember.user", "taskCompletion"})
     Set<TaskAssignment> findByTask_HouseholdAndStatusOrderByDueDateAsc(Household household, AssignmentStatus status);
 
-    boolean existsByTaskAndStatus(Task task, AssignmentStatus status);
-
-    List<TaskAssignment> findByHouseholdMemberAndStatus(HouseholdMember householdMember, AssignmentStatus status);
+    List<TaskAssignment> findByHouseholdMemberAndTaskCompletionIsNull(HouseholdMember householdMember);
 
     List<TaskAssignment> findByTaskAndStatus(Task task, AssignmentStatus status);
 

@@ -142,30 +142,6 @@ class TaskAssignmentServiceTest {
     }
 
     @Test
-    void generateDueAssignments_usesHouseholdLocalDate_whenItIsAlreadyTomorrowThere() {
-        Task task = soloTask(Frequency.DAILY, LocalDate.of(2026, 10, 13), "Europe/Amsterdam");
-
-        when(taskRepository.findByFrequencyNotIn(anyList())).thenReturn(List.of(task));
-        when(taskAssignmentRepository.save(any(TaskAssignment.class))).thenAnswer(invocation -> invocation.getArgument(0));
-
-        taskAssignmentService.generateDueAssignments();
-
-        TaskAssignment saved = savedAssignment();
-        assertThat(saved.getDueDate()).isEqualTo(LocalDate.of(2026, 10, 13));
-    }
-
-    @Test
-    void generateDueAssignments_skipsTask_whenItIsNotYetDueInHouseholdLocalDate() {
-        Task task = soloTask(Frequency.DAILY, LocalDate.of(2026, 10, 13), "UTC");
-
-        when(taskRepository.findByFrequencyNotIn(anyList())).thenReturn(List.of(task));
-
-        taskAssignmentService.generateDueAssignments();
-
-        verify(taskAssignmentRepository, never()).save(any(TaskAssignment.class));
-    }
-
-    @Test
     void createNextAssignment_schedulesNextWeek_whenSameDayTaskIsCompletedOnItsDueDate() {
         Task task = soloTask(Frequency.WEEKLY, LocalDate.of(2026, 10, 12), "UTC");
         TaskAssignment completed = openAssignment(task, task.getResponsibleMember());
