@@ -2,10 +2,12 @@ package com.terridb.chorequest.services;
 
 import com.terridb.chorequest.dtos.taskAssignments.TaskAssignmentRequestDto;
 import com.terridb.chorequest.dtos.taskAssignments.TaskAssignmentResponseDto;
+import com.terridb.chorequest.dtos.taskAssignments.TaskHistoryEntryDto;
 import com.terridb.chorequest.entities.Household;
 import com.terridb.chorequest.entities.HouseholdMember;
 import com.terridb.chorequest.entities.Task;
 import com.terridb.chorequest.entities.TaskAssignment;
+import com.terridb.chorequest.entities.enums.AssignmentStatus;
 import com.terridb.chorequest.entities.enums.AssignmentStrategy;
 import com.terridb.chorequest.entities.enums.Frequency;
 import com.terridb.chorequest.exceptions.BadRequestException;
@@ -14,10 +16,13 @@ import com.terridb.chorequest.mappers.TaskAssignmentMapper;
 import com.terridb.chorequest.repositories.HouseholdMemberRepository;
 import com.terridb.chorequest.repositories.TaskAssignmentRepository;
 import com.terridb.chorequest.repositories.TaskRepository;
+import org.springframework.data.domain.Limit;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.List;
 import java.util.Optional;
@@ -59,6 +64,19 @@ public class TaskAssignmentService {
         return taskAssignmentMapper.toDto(assignments.stream().toList());
     }
 
+    public List<TaskHistoryEntryDto> getHistoryForTask(UUID id, int limit, String sub) {
+        if (limit < 1 || limit > 50) {
+            throw new BadRequestException("Limit must be between 1 and 50");
+        }
+
+        Task task = getTask(id);
+        householdService.requireMembership(task.getHousehold(), sub);
+
+        List<TaskAssignment> assignments = taskAssignmentRepository.findHistoryByTask(task, Limit.of(limit));
+
+        return taskAssignmentMapper.toHistoryDto(assignments);
+    }
+
     public List<TaskAssignmentResponseDto> getAssignmentsForMember(UUID id, String sub) {
         HouseholdMember member = getMember(id);
         householdService.requireMembership(member.getHousehold(), sub);
@@ -72,7 +90,7 @@ public class TaskAssignmentService {
         Household household = householdService.getHousehold(householdId);
         householdService.requireMembership(household, sub);
 
-        Set<TaskAssignment> assignments = taskAssignmentRepository.findByTask_HouseholdAndTaskCompletionIsNullOrderByDueDateAsc(household);
+        Set<TaskAssignment> assignments = taskAssignmentRepository.findByTask_HouseholdAndStatusOrderByDueDateAsc(household, AssignmentStatus.OPEN);
 
         return taskAssignmentMapper.toDto(assignments.stream().toList());
     }
@@ -83,9 +101,7 @@ public class TaskAssignmentService {
 
         HouseholdMember member = getMember(input.getHouseholdMemberId());
 
-        if (assignment.getTaskCompletion() != null) {
-            throw new BadRequestException("Cannot reassign a completed task assignment");
-        }
+        assignment.requireOpen();
 
         if (!member.getHousehold().getId().equals(assignment.getTask().getHousehold().getId())) {
             throw new BadRequestException("Household member does not belong to this task's household");
@@ -103,10 +119,7 @@ public class TaskAssignmentService {
         TaskAssignment assignment = getAssignment(id);
         householdService.requireMembership(assignment.getTask().getHousehold(), sub);
 
-        if (assignment.getTaskCompletion() != null) {
-            throw new BadRequestException("Cannot delete a completed task assignment");
-        }
-
+        assignment.requireOpen();
         taskAssignmentRepository.delete(assignment);
     }
 
@@ -126,12 +139,12 @@ public class TaskAssignmentService {
         return createAssignment(task, member, calculateTaskDueDate(task));
     }
 
-    public TaskAssignmentResponseDto createInitialAssignment(Task task) {
-        return createAssignment(task, resolveAssignee(task), calculateInitialDueDate(task));
+    public void createInitialAssignment(Task task) {
+        createAssignment(task, resolveAssignee(task), calculateInitialDueDate(task));
     }
 
     public void rescheduleOpenAssignments(Task task) {
-        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByTaskAndTaskCompletionIsNull(task);
+        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByTaskAndStatus(task, AssignmentStatus.OPEN);
         LocalDate dueDate = calculateInitialDueDate(task);
 
         // A task switched from ONCE or AS_NEEDED to a recurring frequency may have nothing open yet
@@ -155,25 +168,25 @@ public class TaskAssignmentService {
             return;
         }
 
-        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByTaskAndTaskCompletionIsNull(task);
+        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByTaskAndStatus(task, AssignmentStatus.OPEN);
         for (TaskAssignment assignment : openAssignments) {
             assignment.setHouseholdMember(responsibleMember);
         }
         taskAssignmentRepository.saveAll(openAssignments);
     }
 
-    public void createNextAssignment(TaskAssignment completedAssignment) {
+    public TaskAssignmentResponseDto createNextAssignment(TaskAssignment completedAssignment) {
         Task task = completedAssignment.getTask();
         if (task.getFrequency() == Frequency.ONCE) {
-            return;
+            return null;
         }
 
-        createAssignment(task, resolveAssignee(task), calculateNextDueDate(task, completedAssignment.getDueDate()));
+        return createAssignment(task, resolveAssignee(task), calculateNextDueDate(task, completedAssignment.getDueDate()));
     }
 
     public void reassignOpenAssignments(HouseholdMember leavingMember) {
         List<HouseholdMember> members = householdMemberRepository.findByHouseholdAndLeftAtIsNullOrderByCreatedAtAsc(leavingMember.getHousehold());
-        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByHouseholdMemberAndTaskCompletionIsNull(leavingMember);
+        List<TaskAssignment> openAssignments = taskAssignmentRepository.findByHouseholdMemberAndStatus(leavingMember, AssignmentStatus.OPEN);
 
         if (members.size() <= 1) {
             taskAssignmentRepository.deleteAll(openAssignments);
@@ -188,6 +201,22 @@ public class TaskAssignmentService {
             assignment.setHouseholdMember(hasOtherSoloOwner ? owner : nextMember);
         }
         taskAssignmentRepository.saveAll(openAssignments);
+    }
+
+    @Transactional
+    public TaskAssignmentResponseDto skipAssignment(UUID id, String sub) {
+        TaskAssignment assignment = getAssignment(id);
+        HouseholdMember skipper = householdService.requireMembership(assignment.getTask().getHousehold(), sub);
+
+        if (!isRecurring(assignment.getTask())) {
+            throw new BadRequestException("Task is not recurring and can't be skipped");
+        }
+
+        assignment.skip(skipper, LocalDateTime.now(clock));
+        taskAssignmentRepository.save(assignment);
+
+        Task task = assignment.getTask();
+        return createAssignment(task, assignment.getHouseholdMember(), calculateDueDateAfterSkip(task, assignment.getDueDate()));
     }
 
     private boolean isRecurring(Task task) {
@@ -259,6 +288,20 @@ public class TaskAssignmentService {
 
         Period period = periodFor(task.getFrequency());
         while (!dueDate.isAfter(completedDueDate)) {
+            dueDate = dueDate.plus(period);
+        }
+        return dueDate;
+    }
+
+    private LocalDate calculateDueDateAfterSkip(Task task, LocalDate skippedDueDate) {
+        if (skippedDueDate == null) {
+            return calculateTaskDueDate(task);
+        }
+
+        Period period = periodFor(task.getFrequency());
+        LocalDate today = today(task);
+        LocalDate dueDate = skippedDueDate.plus(period);
+        while (dueDate.isBefore(today)) {
             dueDate = dueDate.plus(period);
         }
         return dueDate;

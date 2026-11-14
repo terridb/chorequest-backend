@@ -88,11 +88,10 @@ public class HouseholdService {
                 .orElseThrow(() -> new RecordNotFoundException("Household with id " + id + " not found"));
     }
 
-    public void requireMembership(Household household, String sub) {
+    public HouseholdMember requireMembership(Household household, String sub) {
         User user = userService.getUserBySub(sub);
-        if (!householdMemberRepository.existsByHouseholdAndUserAndLeftAtIsNull(household, user)) {
-            throw new AccessDeniedException("Not a member of this household");
-        }
+        return householdMemberRepository.findByHouseholdAndUserAndLeftAtIsNull(household, user)
+                .orElseThrow(() -> new AccessDeniedException("Not a member of this household"));
     }
 
     public void requireAdmin(Household household, String sub) {
