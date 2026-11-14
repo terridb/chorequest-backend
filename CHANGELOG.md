@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/terridb/chorequest-backend/compare/v0.5.2...v0.6.0) (2026-11-14)
+
+
+### Features
+
+* added optimistic locking and status guards to assignments and scheduled skipped assignments one period after the skipped due date ([b8cc683](https://github.com/terridb/chorequest-backend/commit/b8cc68378bd2d95221e1377c57d5ea037c9ec00a))
+
+
+### Bug Fixes
+
+* restored the status query and removed a leftover scheduler test after merging main ([632df58](https://github.com/terridb/chorequest-backend/commit/632df58c5bdec55d993991dd0a19ee047a2575d6))
+
 ## [0.5.2](https://github.com/terridb/chorequest-backend/compare/v0.5.1...v0.5.2) (2026-11-09)
 
 
