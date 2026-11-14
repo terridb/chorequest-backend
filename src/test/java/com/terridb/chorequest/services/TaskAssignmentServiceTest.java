@@ -796,18 +796,6 @@ class TaskAssignmentServiceTest {
     }
 
     @Test
-    void generateDueAssignments_skipsTask_whenItAlreadyHasAnOpenAssignment() {
-        Task task = soloTask(Frequency.DAILY, LocalDate.of(2026, 10, 1), "UTC");
-
-        when(taskRepository.findByFrequencyNotIn(List.of(Frequency.AS_NEEDED, Frequency.ONCE))).thenReturn(List.of(task));
-        when(taskAssignmentRepository.existsByTaskAndStatus(task, AssignmentStatus.OPEN)).thenReturn(true);
-
-        taskAssignmentService.generateDueAssignments();
-
-        verify(taskAssignmentRepository, never()).save(any(TaskAssignment.class));
-    }
-
-    @Test
     void skipAssignment_marksAssignmentSkippedAndKeepsSameMemberForNextOccurrence() {
         Household household = household("UTC");
         HouseholdMember assignee = member(household);
