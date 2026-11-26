@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.6.1](https://github.com/terridb/chorequest-backend/compare/v0.6.0...v0.6.1) (2026-11-26)
+
+
+### Bug Fixes
+
+* **deps:** bump the production group across 1 directory with 2 updates ([954570e](https://github.com/terridb/chorequest-backend/commit/954570e512d933b8d2200ae0d6c645a0b3161c8e))
+* **deps:** bump the production group across 1 directory with 2 updates ([a243ad5](https://github.com/terridb/chorequest-backend/commit/a243ad5da956a1fa6807d6f4bc8080c5ac6c5ae8))
+
 ## [0.6.0](https://github.com/terridb/chorequest-backend/compare/v0.5.2...v0.6.0) (2026-11-14)
 
 
